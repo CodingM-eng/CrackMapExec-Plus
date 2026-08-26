@@ -1,0 +1,15 @@
+# CrackMapExec+ Example Target List
+# Lines starting with # and blank lines are ignored
+
+# Lab Domain Controllers
+192.168.1.10
+192.168.1.11
+
+# Workstations
+192.168.1.100-105
+
+# File Server with explicit port
+192.168.1.50:445
+
+# Internal Hostname
+dc01.corp.local

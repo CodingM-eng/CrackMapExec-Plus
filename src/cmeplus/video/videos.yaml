@@ -1,0 +1,55 @@
+smb:
+  title: "SMB Guide"
+  url: "https://www.youtube.com/watch?v=0_v4U_F6bY4"
+  start: 143
+  description: "SMB fundamentals, dialect negotiation, and authorized lab workflow"
+  tags: ["smb", "windows", "shares", "signing"]
+
+ldap:
+  title: "LDAP Guide"
+  url: "https://www.youtube.com/watch?v=0_v4U_F6bY4"
+  start: 375
+  description: "Active Directory LDAP fundamentals and authorized lab workflow"
+  tags: ["ldap", "active-directory", "domain", "recon"]
+
+winrm:
+  title: "WinRM Guide"
+  url: "https://www.youtube.com/watch?v=0_v4U_F6bY4"
+  start: 612
+  description: "WinRM WS-Management remote administration and execution workflow"
+  tags: ["winrm", "powershell", "remote-management"]
+
+ssh:
+  title: "SSH Guide"
+  url: "https://www.youtube.com/watch?v=0_v4U_F6bY4"
+  start: 840
+  description: "SSH secure shell exploration and lab host management"
+  tags: ["ssh", "linux", "keys", "pivoting"]
+
+modules:
+  title: "Modules Guide"
+  url: "https://www.youtube.com/watch?v=0_v4U_F6bY4"
+  start: 1020
+  description: "Extending CrackMapExec+ with custom post-enumeration modules"
+  tags: ["modules", "plugins", "custom", "python"]
+
+wizard:
+  title: "Wizard Guide"
+  url: "https://www.youtube.com/watch?v=0_v4U_F6bY4"
+  start: 1215
+  description: "Using the interactive job creation wizard for rapid task construction"
+  tags: ["wizard", "interactive", "beginner", "workflow"]
+
+reporting:
+  title: "Reporting & Dashboards"
+  url: "https://www.youtube.com/watch?v=0_v4U_F6bY4"
+  start: 1450
+  description: "Generating modern HTML security dashboards and machine-readable JSON reports"
+  tags: ["reporting", "html", "json", "audit"]
+
+full-tutorial:
+  title: "Full Masterclass Tutorial"
+  url: "https://www.youtube.com/watch?v=0_v4U_F6bY4"
+  start: 0
+  description: "Complete end-to-end CrackMapExec+ authorized lab walkthrough"
+  tags: ["tutorial", "overview", "masterclass", "intro"]

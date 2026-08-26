@@ -1,0 +1,25 @@
+# Example CrackMapExec+ Multi-Protocol Batch Project
+name: "Lab Environment Multi-Protocol Audit"
+
+jobs:
+  - name: "Domain Controllers Recon"
+    protocol: smb
+    targets:
+      - 192.168.56.10
+      - 192.168.56.11
+    modules:
+      - shares
+      - users
+    workers: 2
+
+  - name: "Active Directory Directory Discovery"
+    protocol: ldap
+    targets:
+      - 192.168.56.10
+    workers: 2
+
+  - name: "Management Endpoints"
+    protocol: winrm
+    targets:
+      - 192.168.56.20
+    workers: 2

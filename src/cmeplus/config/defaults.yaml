@@ -1,0 +1,23 @@
+# CrackMapExec+ Default Global Configuration
+version: "1.0"
+
+# Default concurrency worker thread count (1-64)
+workers: 4
+
+# Network socket timeout in seconds
+timeout: 5.0
+
+# Terminal UI Theme ("security", "classic", "minimal")
+theme: "security"
+
+# Default output format ("console", "json", "quiet")
+output_format: "console"
+
+# Video Guide behavior ("card", "auto_open")
+video_behavior: "card"
+
+# Default directory for generated JSON/HTML reports
+report_location: "reports"
+
+# Demo simulation delay speed (in seconds, 0 for instant)
+demo_speed: 0.1

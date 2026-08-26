@@ -1,0 +1,43 @@
+# Safe Seminar Simulation Scenario Data (100% Mock / Zero Network Activity)
+scenario_name: "MegaCorp Authorized CTF Lab"
+domain: "CORP.LOCAL"
+
+targets:
+  - ip: "192.168.56.10"
+    hostname: "DC01"
+    os: "Windows Server 2022 Datacenter Build 20348 (x64)"
+    protocol: "smb"
+    port: 445
+    smb_version: "SMB 3.1.1"
+    signing: true
+    status: "success"
+    message: "[Pwn3d!] (name:DC01) (domain:CORP.LOCAL) (signing:True) (SMBv3.1.1)"
+    shares: ["ADMIN$", "C$", "IPC$", "NETLOGON", "SYSVOL", "Backups"]
+    users: ["Administrator", "krbtgt", "svc_backup", "jdoe", "asmith"]
+
+  - ip: "192.168.56.11"
+    hostname: "FS01"
+    os: "Windows Server 2019 Standard (x64)"
+    protocol: "smb"
+    port: 445
+    smb_version: "SMB 3.0"
+    signing: false
+    status: "success"
+    message: "[+] (name:FS01) (domain:CORP.LOCAL) (signing:False) (SMBv3.0)"
+    shares: ["C$", "Finance", "HR", "SharedDocs"]
+    users: ["Administrator", "local_admin"]
+
+  - ip: "192.168.56.20"
+    hostname: "DEV-WS01"
+    os: "Windows 11 Pro Build 22631 (x64)"
+    protocol: "winrm"
+    port: 5985
+    status: "success"
+    message: "[+] WinRM HTTP active (PowerShell 7.4 Remoting endpoint)"
+
+  - ip: "192.168.56.254"
+    hostname: "OFFLINE-HOST"
+    protocol: "smb"
+    port: 445
+    status: "unavailable"
+    message: "Connection refused (Simulated Host Offline)"
