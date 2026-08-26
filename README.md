@@ -79,54 +79,65 @@ crackmapexec-plus/
 │   └── cmeplus/
 │       ├── __init__.py
 │       ├── __main__.py
-│       ├── cli/
-│       │   ├── parser.py        # Categorized CLI parser & multi-protocol chaining
-│       │   ├── commands.py      # Top-level command handlers
-│       │   ├── wizard.py        # Interactive job questionnaire
-│       │   └── interactive.py   # Video Center interactive UI
-│       ├── core/
-│       │   ├── engine.py        # Master coordination engine
-│       │   ├── context.py       # Runtime execution context
-│       │   ├── targets.py       # Target parsing, CIDR & validation
-│       │   ├── jobs.py          # Job, JobCredentials, JobQueue, JobPlan
-│       │   ├── workers.py       # Concurrency pool & cancellation
-│       │   ├── results.py       # Result & ResultSet models
-│       │   └── exceptions.py    # Exception hierarchy
-│       ├── protocols/
-│       │   ├── base.py          # BaseProtocol & ProtocolCapabilities
-│       │   ├── manager.py       # Protocol registry
-│       │   ├── smb.py           # Lab-safe SMB probe & negotiation
-│       │   ├── ldap.py          # LDAP adapter
-│       │   ├── winrm.py         # WinRM adapter
-│       │   ├── ssh.py           # SSH adapter
-│       │   └── mock.py          # Offline mock simulation driver
-│       ├── modules/
-│       │   ├── base.py          # BaseModule interface
-│       │   ├── manager.py       # Module loader (-L, -M)
-│       │   └── builtin/         # shares, users, passpol modules
-│       ├── video/
-│       │   ├── models.py        # VideoGuideItem & timestamp math
-│       │   ├── manager.py       # Video catalog engine
-│       │   └── videos.yaml      # Default catalog
-│       ├── config/
-│       │   ├── loader.py        # User configuration loader
-│       │   └── defaults.yaml    # Package defaults
-│       ├── history/
-│       │   └── manager.py       # SQLite metadata history (no secrets)
-│       ├── output/
-│       │   ├── console.py       # Rich terminal UI
-│       │   ├── tables.py        # Rich tables
-│       │   ├── json.py          # JSON formatter
-│       │   └── html.py          # Dark security dashboard HTML
-│       ├── reports/
-│       │   └── generator.py     # Timestamped report bundles
-│       └── demo/
-│           ├── engine.py        # Safe seminar demo simulator
-│           └── scenarios/       # Realistic mock network data
-├── tests/                       # Complete pytest unit & integration test suite
-├── docs/                        # Comprehensive documentation
-├── examples/                    # Sample targets and batch project files
-├── pyproject.toml               # Package configuration & entrypoints
+│       ├── cli/                 # CLI parsing, subcommands & interactive menus
+│       │   ├── __init__.py
+│       │   ├── parser.py
+│       │   ├── commands.py
+│       │   ├── wizard.py
+│       │   └── interactive.py
+│       ├── core/                # Core engine & job orchestration
+│       │   ├── __init__.py
+│       │   ├── engine.py
+│       │   ├── context.py
+│       │   ├── targets.py
+│       │   ├── jobs.py
+│       │   ├── workers.py
+│       │   ├── results.py
+│       │   └── exceptions.py
+│       ├── protocols/           # Protocol drivers (SMB, LDAP, WinRM, SSH, Mock)
+│       │   ├── __init__.py
+│       │   ├── base.py
+│       │   ├── manager.py
+│       │   ├── smb.py
+│       │   ├── ldap.py
+│       │   ├── winrm.py
+│       │   ├── ssh.py
+│       │   └── mock.py
+│       ├── modules/             # Post-enumeration module system
+│       │   ├── __init__.py
+│       │   ├── base.py
+│       │   ├── manager.py
+│       │   └── builtin/
+│       ├── video/               # Video Guide Center & catalog
+│       │   ├── __init__.py
+│       │   ├── models.py
+│       │   ├── manager.py
+│       │   └── videos.yaml
+│       ├── config/              # Configuration loaders & defaults
+│       │   ├── __init__.py
+│       │   ├── loader.py
+│       │   └── defaults.yaml
+│       ├── history/             # Privacy-preserving SQLite execution log
+│       │   ├── __init__.py
+│       │   └── manager.py
+│       ├── output/              # Rich console presentation & formatters
+│       │   ├── __init__.py
+│       │   ├── console.py
+│       │   ├── tables.py
+│       │   ├── json.py
+│       │   └── html.py
+│       ├── reports/             # HTML dashboard & JSON report generators
+│       │   ├── __init__.py
+│       │   └── generator.py
+│       └── demo/                # Zero-packet seminar simulator
+│           ├── __init__.py
+│           ├── engine.py
+│           └── scenarios/
+├── tests/                       # Complete pytest unit & regression test suite
+├── docs/                        # In-depth architectural & usage documentation
+├── examples/                    # Sample target lists and batch configurations
+├── pyproject.toml               # Modern build configuration & entry points
+├── setup.py                     # Legacy compatibility shim
 ├── README.md
 ├── LICENSE
 └── .gitignore
@@ -134,29 +145,72 @@ crackmapexec-plus/
 
 ---
 
-## 📦 Installation
+## 📦 Installation (Kali Linux / Debian / macOS / Windows)
+
+### Standard Setup
 
 ```bash
-# Clone the repository
+# 1. Clone the repository
 git clone https://github.com/CodingM-eng/CrackMapExec-Plus.git
 cd CrackMapExec-Plus
 
-# Create and activate a virtual environment
+# 2. Create and activate a virtual environment
 python3 -m venv .venv
 source .venv/bin/activate  # On Linux / macOS
-# .venv\Scripts\activate   # On Windows
+# .venv\Scripts\activate   # On Windows PowerShell
 
-# Install in editable mode
-pip install -e .
+# 3. Install in editable mode
+python -m pip install -e .
 ```
 
-Verify binary availability:
+Verify binary entry points:
 
 ```bash
 crackmapexec+ --version
-# or use the short alias
-cme+ --about
+cme+ --version
 ```
+
+Both console scripts will output:
+```text
+CrackMapExec+ 0.1.0
+```
+
+---
+
+## 🔧 Troubleshooting: `command not found`
+
+If your shell reports `command not found: crackmapexec+` or `cme+`:
+
+1. **Verify Virtual Environment Activation**:
+   Confirm that your prompt shows `(.venv)` and that `.venv/bin` is in your `$PATH`:
+   ```bash
+   which crackmapexec+
+   which cme+
+   ```
+   If nothing is returned, reactivate the environment:
+   ```bash
+   source .venv/bin/activate
+   ```
+
+2. **Verify Package Installation Metadata**:
+   Check if the package is installed and editable:
+   ```bash
+   python -m pip show crackmapexec-plus
+   ```
+
+3. **Direct Python Module Invocation**:
+   You can always invoke CrackMapExec+ directly via Python, regardless of shell path configuration:
+   ```bash
+   python -m cmeplus --version
+   python -m cmeplus --help
+   python -m cmeplus --about
+   ```
+
+4. **Explicit Virtual Environment Binary**:
+   ```bash
+   ./.venv/bin/crackmapexec+ --version   # Linux / macOS
+   .\.venv\Scripts\crackmapexec+.exe --version  # Windows
+   ```
 
 ---
 
@@ -235,7 +289,7 @@ Run the full automated test suite and linter:
 
 ```bash
 # Install development dependencies
-pip install -e ".[dev]"
+python -m pip install -e ".[dev]"
 
 # Run test suite
 pytest -v tests/

@@ -26,6 +26,7 @@ MANIFEST
 
 # Virtual Environments
 .venv/
+.venv*/
 venv/
 env/
 ENV/
@@ -62,8 +63,8 @@ htmlcov/
 Thumbs.db
 desktop.ini
 
-# Output & Generated Reports / Databases
-reports/
+# Output & Generated Reports / Databases (Root Only)
+/reports/
 *.db
 *.sqlite3
 *.log
