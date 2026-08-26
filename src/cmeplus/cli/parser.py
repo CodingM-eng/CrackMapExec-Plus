@@ -17,9 +17,11 @@ from cmeplus import __version__
 from cmeplus.cli.commands import (
     handle_about,
     handle_batch_project,
+    handle_command_help,
     handle_demo,
     handle_explain,
     handle_history,
+    handle_protocol_help,
     handle_version,
     handle_video_command,
     handle_wizard,
@@ -35,13 +37,13 @@ from cmeplus.output.tables import TableRenderer
 
 
 def print_categorized_help(console: Console) -> None:
-    """Print the structured, categorized CrackMapExec+ help menu."""
+    """Print the clean, categorized CrackMapExec+ global help menu."""
     banner_text = Text()
     banner_text.append("╭────────────────────────────────────────────────────────────╮\n", style="bold cyan")
     banner_text.append("│              ", style="bold cyan")
     banner_text.append("CrackMapExec+ ", style="bold white")
     banner_text.append(f"v{__version__}", style="bold yellow")
-    banner_text.append(" — Security Lab Suite        │\n", style="bold cyan")
+    banner_text.append(" — Security Lab Framework     │\n", style="bold cyan")
     banner_text.append("│      ", style="bold cyan")
     banner_text.append("Educational • Authorized Labs • Protocol-Driven       ", style="dim white")
     banner_text.append("│\n", style="bold cyan")
@@ -50,39 +52,36 @@ def print_categorized_help(console: Console) -> None:
     console.print()
 
     menu = Text()
-    menu.append("Core Protocols:\n", style="bold cyan")
-    menu.append("  smb <targets>       Windows SMB file sharing & dialect negotiation\n", style="white")
-    menu.append("  ldap <targets>      Active Directory LDAP service inspection\n", style="white")
-    menu.append("  winrm <targets>     Windows Remote Management (WS-Man) endpoint\n", style="white")
-    menu.append("  ssh <targets>       Secure Shell banner grab & connection check\n", style="white")
-    menu.append("\n")
+    menu.append("Usage:\n", style="bold cyan")
+    menu.append("  crackmapexec+ <protocol> <target> [options]\n\n", style="bold yellow")
 
-    menu.append("Workflows:\n", style="bold cyan")
-    menu.append("  wizard              Interactive guided job builder\n", style="white")
-    menu.append("  batch <file.yaml>   Execute a multi-job batch project plan\n", style="white")
-    menu.append("  history             View recent execution metadata (zero secrets)\n", style="white")
-    menu.append("\n")
+    menu.append("Protocols:\n", style="bold cyan")
+    menu.append("  smb       SMB workflow & dialect negotiation\n", style="white")
+    menu.append("  ldap      LDAP workflow & Active Directory inspection\n", style="white")
+    menu.append("  winrm     WinRM workflow & WS-Man administration\n", style="white")
+    menu.append("  ssh       SSH workflow & secure shell exploration\n\n", style="white")
 
-    menu.append("Learning & Video Center:\n", style="bold cyan")
-    menu.append("  --v [topic]         Video Guide Center (--v, --v smb, --v list, --v search <q>)\n", style="white")
-    menu.append("  --explain <proto>   In-depth educational explanation of protocol fundamentals\n", style="white")
-    menu.append("\n")
+    menu.append("Workflow:\n", style="bold cyan")
+    menu.append("  wizard    Interactive command builder\n", style="white")
+    menu.append("  history   Execution history (metadata only)\n", style="white")
+    menu.append("  batch     Run a saved multi-job project\n\n", style="white")
 
-    menu.append("Simulation:\n", style="bold cyan")
-    menu.append("  --demo              100% offline, zero-network seminar demonstration\n", style="white")
-    menu.append("\n")
+    menu.append("Learning:\n", style="bold cyan")
+    menu.append("  --video   Video Guide Center (e.g. --video smb, --video list)\n", style="white")
+    menu.append("  --v       Short alias for --video\n", style="white")
+    menu.append("  --explain In-depth educational protocol explanation\n\n", style="white")
 
-    menu.append("Output & Reporting:\n", style="bold cyan")
-    menu.append("  --report            Generate machine JSON and HTML dark dashboard bundle\n", style="white")
-    menu.append("  --format <fmt>      Output format: console (default), json, quiet\n", style="white")
-    menu.append("\n")
+    menu.append("Output:\n", style="bold cyan")
+    menu.append("  --report  Generate HTML dashboard and JSON report bundle\n", style="white")
+    menu.append("  --format  Select output format: console (default), json, quiet\n\n", style="white")
 
-    menu.append("Global Options:\n", style="bold cyan")
-    menu.append("  --workers <N>       Concurrent worker threads (default: 4)\n", style="white")
-    menu.append("  --timeout <sec>     Socket connection timeout (default: 5.0)\n", style="white")
-    menu.append("  --version           Show version\n", style="white")
-    menu.append("  --about             Show detailed environment and system information\n", style="white")
-    menu.append("  --help, -h          Show this help screen\n", style="white")
+    menu.append("Demo:\n", style="bold cyan")
+    menu.append("  --demo    Safe 100% offline seminar demonstration\n\n", style="white")
+
+    menu.append("General:\n", style="bold cyan")
+    menu.append("  --version Show version\n", style="white")
+    menu.append("  --about   Show detailed environment and system information\n", style="white")
+    menu.append("  --help    Show this help reference\n", style="white")
 
     panel = Panel(menu, title="[bold cyan]Command & Workflow Reference[/bold cyan]", border_style="cyan")
     console.print(panel)
@@ -102,24 +101,33 @@ def parse_and_execute(argv: list[str] | None = None) -> int:
         print_categorized_help(console_out.console)
         return 0
 
-    # 2. Check for --v flag (Video Guide Center)
-    if "--v" in argv:
-        idx = argv.index("--v")
+    first_arg = argv[0].lower()
+
+    # 2. Check for --help / -h global help
+    if ("--help" in argv or "-h" in argv) and len(argv) == 1:
+        print_categorized_help(console_out.console)
+        return 0
+
+    # 3. Check for --video or --v (Video Guide Center)
+    if "--video" in argv or "--v" in argv:
+        flag = "--video" if "--video" in argv else "--v"
+        idx = argv.index(flag)
         v_args = argv[idx + 1:]
         handle_video_command(v_args, console_out)
         return 0
 
-    # 3. Check for top-level non-protocol commands / flags
-    if "--version" in argv or argv == ["-version"]:
+    if first_arg == "video":
+        v_args = argv[1:]
+        handle_video_command(v_args, console_out)
+        return 0
+
+    # 4. Check for top-level non-protocol commands / flags
+    if "--version" in argv or argv == ["-version"] or argv == ["-v"]:
         handle_version(console_out)
         return 0
 
     if "--about" in argv:
         handle_about(console_out)
-        return 0
-
-    if "--help" in argv or "-h" in argv and len(argv) == 1:
-        print_categorized_help(console_out.console)
         return 0
 
     if "--demo" in argv:
@@ -133,8 +141,16 @@ def parse_and_execute(argv: list[str] | None = None) -> int:
         handle_explain(proto, console_out, engine)
         return 0
 
-    first_arg = argv[0].lower()
+    # 5. Check for workflow commands with --help
+    if first_arg in ("wizard", "history", "batch") and ("--help" in argv or "-h" in argv):
+        handle_command_help(first_arg, console_out)
+        return 0
 
+    if ("--report" in argv or "report" in argv) and ("--help" in argv or "-h" in argv):
+        handle_command_help("report", console_out)
+        return 0
+
+    # 6. Check for workflow command execution
     if first_arg == "wizard":
         engine = Engine(config=app_config, console=console_out)
         handle_wizard(console_out, engine)
@@ -148,6 +164,7 @@ def parse_and_execute(argv: list[str] | None = None) -> int:
     if first_arg == "batch":
         if len(argv) < 2:
             console_out.print_failure("Usage: crackmapexec+ batch <project.yaml>")
+            console_out.print_info("Run 'crackmapexec+ batch --help' for details.")
             return 1
         engine = Engine(config=app_config, console=console_out)
         try:
@@ -157,8 +174,12 @@ def parse_and_execute(argv: list[str] | None = None) -> int:
             console_out.print_failure(str(exc))
             return 1
 
-    # 4. Multi-protocol job detection or single protocol job
-    # Check if there are multiple protocol tokens in argv
+    # 7. Check for protocol-specific help (e.g. `crackmapexec+ smb --help`)
+    if first_arg in known_protocols and ("--help" in argv or "-h" in argv):
+        handle_protocol_help(first_arg, console_out)
+        return 0
+
+    # 8. Multi-protocol job detection or single protocol job
     proto_indices = [(i, arg.lower()) for i, arg in enumerate(argv) if arg.lower() in known_protocols]
 
     if not proto_indices:
@@ -182,7 +203,7 @@ def parse_and_execute(argv: list[str] | None = None) -> int:
         if w_idx + 1 < len(clean_argv):
             try:
                 workers = int(clean_argv[w_idx + 1])
-                del clean_argv[w_idx:w_idx + 2]
+                del clean_argv[w_idx : w_idx + 2]
             except ValueError:
                 pass
 
@@ -191,7 +212,7 @@ def parse_and_execute(argv: list[str] | None = None) -> int:
         if t_idx + 1 < len(clean_argv):
             try:
                 timeout = float(clean_argv[t_idx + 1])
-                del clean_argv[t_idx:t_idx + 2]
+                del clean_argv[t_idx : t_idx + 2]
             except ValueError:
                 pass
 
@@ -199,7 +220,7 @@ def parse_and_execute(argv: list[str] | None = None) -> int:
         f_idx = clean_argv.index("--format")
         if f_idx + 1 < len(clean_argv):
             output_format = clean_argv[f_idx + 1]
-            del clean_argv[f_idx:f_idx + 2]
+            del clean_argv[f_idx : f_idx + 2]
 
     exec_context = ExecutionContext(
         workers=workers,
@@ -229,9 +250,9 @@ def parse_and_execute(argv: list[str] | None = None) -> int:
             console_out.console.print(TableRenderer.render_modules_table(mods, protocol=proto))
             return 0
 
-        # Handle --help for protocol
+        # Handle --help for protocol inside chunk
         if "--help" in chunk or "-h" in chunk:
-            handle_explain(proto, console_out, engine)
+            handle_protocol_help(proto, console_out)
             return 0
 
         # Parse subparser arguments for this chunk
@@ -247,13 +268,14 @@ def parse_and_execute(argv: list[str] | None = None) -> int:
         sub_parser.add_argument("--port", type=int, default=None)
 
         try:
-            parsed_sub, extra_tokens = sub_parser.parse_known_args(chunk)
+            parsed_sub, _ = sub_parser.parse_known_args(chunk)
         except SystemExit:
             return 1
 
         if not parsed_sub.target:
             console_out.print_failure(f"Missing target for protocol '{proto}'.")
             console_out.print_info(f"Usage: crackmapexec+ {proto} <target(s)> [options]")
+            console_out.print_info(f"Run 'crackmapexec+ {proto} --help' for details.")
             return 1
 
         target_set = TargetEngine.parse(parsed_sub.target, default_port=parsed_sub.port)

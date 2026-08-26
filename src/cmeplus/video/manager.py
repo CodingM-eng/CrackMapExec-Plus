@@ -43,31 +43,46 @@ class VideoGuideEngine:
             data = yaml.safe_load(content) or {}
             for key, val in data.items():
                 if isinstance(val, dict):
-                    self._items[key.lower().strip()] = VideoGuideItem(
-                        key=key.lower().strip(),
-                        title=val.get("title", key.title()),
+                    clean_k = str(key).lower().strip()
+                    start_val = val.get("start_seconds")
+                    if start_val is None:
+                        start_val = val.get("start", 0)
+
+                    self._items[clean_k] = VideoGuideItem(
+                        key=clean_k,
+                        title=val.get("title", clean_k.title()),
                         url=val.get("url", ""),
-                        start=int(val.get("start", 0)),
+                        start_seconds=int(start_val),
+                        status=val.get("status", "coming_soon"),
                         description=val.get("description", ""),
-                        tags=val.get("tags", []),
+                        keywords=val.get("keywords") or val.get("tags") or [],
                     )
         except Exception as exc:
             raise VideoCatalogError(f"Failed to parse video catalog '{path}': {exc}") from exc
 
     def get(self, topic: str) -> VideoGuideItem | None:
-        """Retrieve video item by topic key."""
-        clean_key = topic.lower().strip()
+        """Retrieve video item by topic key or alias."""
+        clean_key = topic.lower().strip().replace("_", "-")
         # Direct key match
         if clean_key in self._items:
             return self._items[clean_key]
-        # Match aliases (e.g. 'all' -> 'full-tutorial', 'help' -> 'full-tutorial')
+
+        # Match common aliases
         alias_map = {
             "all": "full-tutorial",
             "tutorial": "full-tutorial",
             "main": "full-tutorial",
+            "masterclass": "full-tutorial",
+            "intro": "introduction",
+            "install": "installation",
+            "setup": "installation",
+            "report": "reporting",
+            "reports": "reporting",
+            "module": "modules",
         }
         if clean_key in alias_map:
-            return self._items.get(alias_map[clean_key])
+            target_key = alias_map[clean_key]
+            return self._items.get(target_key)
         return None
 
     def list_all(self) -> list[VideoGuideItem]:
@@ -75,19 +90,20 @@ class VideoGuideEngine:
         return list(self._items.values())
 
     def search(self, query: str) -> list[VideoGuideItem]:
-        """Search catalog by matching query against key, title, description, and tags."""
+        """Search catalog by matching query against key, title, description, and keywords."""
         q = query.lower().strip()
         if not q:
             return self.list_all()
 
         results: list[VideoGuideItem] = []
         for item in self._items.values():
-            tags_str = " ".join(item.tags or []).lower()
+            keywords_str = " ".join(item.keywords).lower()
             if (
                 q in item.key
                 or q in item.title.lower()
                 or q in item.description.lower()
-                or q in tags_str
+                or q in keywords_str
+                or q in item.status.lower()
             ):
                 results.append(item)
         return results

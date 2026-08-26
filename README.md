@@ -244,23 +244,31 @@ crackmapexec+ \
   --report
 ```
 
-### 3. Video Guide Center (`--v`)
+### 3. Video Guide Center (`--video` / `--v`)
 
 ```bash
 # Open interactive Video Center menu
+crackmapexec+ --video
 crackmapexec+ --v
 
-# Direct topic guide with timestamped URL (e.g. 02:23)
-crackmapexec+ --v smb
-crackmapexec+ --v ldap
-crackmapexec+ --v winrm
+# Direct topic guide (e.g. SMB @ 02:23, LDAP @ 06:15)
+crackmapexec+ --video smb
+crackmapexec+ --video ldap
+crackmapexec+ --video winrm
+crackmapexec+ --video ssh
+crackmapexec+ --video modules
+crackmapexec+ --video wizard
+crackmapexec+ --video reporting
+crackmapexec+ --video installation
+crackmapexec+ --video introduction
 
 # Search video catalog by keyword
-crackmapexec+ --v search "active directory"
+crackmapexec+ --video search "active directory"
 
-# List all available catalog topics
-crackmapexec+ --v list
+# List all available catalog topics and timestamps
+crackmapexec+ --video list
 ```
+*(Note: Video tutorials are currently marked as **🚧 Coming Soon** while in active preparation; placeholder URLs are presented safely without premature browser launching).*
 
 ### 4. Interactive Wizard
 

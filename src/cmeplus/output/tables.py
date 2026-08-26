@@ -63,24 +63,32 @@ class TableRenderer:
 
     @staticmethod
     def render_videos_table(items: list[VideoGuideItem]) -> Table:
-        table = Table(title="Video Guide Catalog", border_style="cyan", header_style="bold cyan")
-        table.add_column("Command Topic", style="bold green")
+        table = Table(title="Video Guide Library", border_style="cyan", header_style="bold cyan")
+        table.add_column("Topic", style="bold green")
+        table.add_column("Status", style="yellow")
+        table.add_column("Start", style="bold yellow", justify="center")
         table.add_column("Title", style="bold white")
-        table.add_column("Timestamp", style="yellow", justify="center")
         table.add_column("Description", style="dim white")
 
         for item in items:
+            status_display = "[yellow]Coming Soon[/yellow]" if item.is_coming_soon else "[green]Published[/green]"
+            topic_name = item.key.upper() if len(item.key) <= 5 else item.key.title().replace("-", " ")
             table.add_row(
-                item.key,
-                item.title,
+                topic_name,
+                status_display,
                 item.formatted_timestamp,
+                item.title,
                 item.description,
             )
         return table
 
     @staticmethod
     def render_target_issues_table(issues: list[TargetValidationIssue]) -> Table:
-        table = Table(title="[bold yellow]Target Validation Issues[/bold yellow]", border_style="yellow", header_style="bold yellow")
+        table = Table(
+            title="[bold yellow]Target Validation Issues[/bold yellow]",
+            border_style="yellow",
+            header_style="bold yellow",
+        )
         table.add_column("Source", style="dim white")
         table.add_column("Raw Input", style="bold red")
         table.add_column("Reason", style="white")

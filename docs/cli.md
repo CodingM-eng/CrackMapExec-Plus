@@ -1,6 +1,6 @@
 # CLI Command Reference
 
-CrackMapExec+ provides a categorized, intuitive command-line interface.
+CrackMapExec+ provides a categorized, intuitive command-line interface designed for professional security lab workflows.
 
 ---
 
@@ -8,17 +8,28 @@ CrackMapExec+ provides a categorized, intuitive command-line interface.
 
 | Command / Flag | Description |
 | :--- | :--- |
-| `crackmapexec+ --help` | Show categorized workflow reference |
+| `crackmapexec+ --help`, `-h` | Show categorized workflow and command reference |
 | `crackmapexec+ --version` | Output current semantic version (`0.1.0`) |
 | `crackmapexec+ --about` | Display environment, Python, platform, and licensing info |
 | `crackmapexec+ --demo` | Launch the safe 100% offline seminar demonstration |
 | `crackmapexec+ --explain <proto>` | Display educational overview and lab principles for a protocol |
-| `crackmapexec+ --v [topic]` | Open the Video Guide Center (interactive or direct topic) |
+| `crackmapexec+ --video [topic]` | Open the Video Guide Center (interactive or direct topic) |
+| `crackmapexec+ --v [topic]` | Short alias for `--video` |
 
 ---
 
-## 2. Protocol Syntax
+## 2. Protocol Help & Options
 
+Each protocol provides dedicated `--help` screens:
+
+```bash
+crackmapexec+ smb --help
+crackmapexec+ ldap --help
+crackmapexec+ winrm --help
+crackmapexec+ ssh --help
+```
+
+### Syntax
 ```bash
 crackmapexec+ <protocol> <target(s)> [options]
 ```
@@ -30,18 +41,18 @@ crackmapexec+ <protocol> <target(s)> [options]
 * `ssh` — Secure Shell (Port 22)
 * `mock` — Isolated testing simulation driver
 
-### Common Options
-* `-u <username>`: Authentication username
-* `-p <password>`: Authentication password
-* `-d <domain>`: Active Directory domain or NetBIOS workgroup
-* `-H <hash>`: NTLM hash (`LM:NT` or `NT`)
+### Common Protocol Options
+* `-u, --username <user>`: Authentication username
+* `-p, --password <pass>`: Authentication password
+* `-d, --domain <domain>`: Active Directory domain or NetBIOS workgroup
+* `-H, --hash <ntlm>`: NTLM hash (`LM:NT` or `:NT`)
 * `--local-auth`: Force local SAM authentication instead of domain
 * `--port <port>`: Override default service port
-* `-M <module>`: Execute a post-enumeration module
-* `-L`: List available modules for the protocol
+* `-M, --module <name>`: Execute a post-enumeration module
+* `-L, --list-modules`: List available modules for the protocol
 * `--workers <N>`: Set concurrent worker threads (default: 4)
-* `--timeout <seconds>`: Socket timeout (default: 5.0s)
-* `--report`: Generate HTML and JSON assessment report bundles
+* `--timeout <sec>`: Socket timeout (default: 5.0s)
+* `--report`: Generate HTML dashboard and JSON assessment report bundles
 
 ---
 
@@ -52,7 +63,7 @@ crackmapexec+ <protocol> <target(s)> [options]
 crackmapexec+ smb 192.168.1.10
 crackmapexec+ smb [fe80::1]
 
-# Hostname
+# Hostname / FQDN
 crackmapexec+ smb dc01.corp.local
 
 # Comma-separated list
@@ -64,20 +75,35 @@ crackmapexec+ smb 192.168.1.0/24
 # Octet Range
 crackmapexec+ smb 192.168.1.10-50
 
-# Target File
+# Target File (supports # comments)
 crackmapexec+ smb @hosts.txt
 ```
 
 ---
 
-## 4. Multi-Protocol Chaining
+## 4. Video Guide Center (`--video` / `--v`)
 
 ```bash
-crackmapexec+ \
-  smb 192.168.1.10,192.168.1.11 \
-  ldap 192.168.1.20 \
-  winrm 192.168.1.30 \
-  --report
+# Interactive Video Center
+crackmapexec+ --video
+crackmapexec+ --v
+
+# Direct topic guide
+crackmapexec+ --video smb
+crackmapexec+ --video ldap
+crackmapexec+ --video winrm
+crackmapexec+ --video ssh
+crackmapexec+ --video modules
+crackmapexec+ --video wizard
+crackmapexec+ --video reporting
+crackmapexec+ --video installation
+crackmapexec+ --video introduction
+
+# Search video library
+crackmapexec+ --video search smb
+
+# List all available video guides and timestamps
+crackmapexec+ --video list
 ```
 
 ---
@@ -87,14 +113,23 @@ crackmapexec+ \
 ### Interactive Wizard
 ```bash
 crackmapexec+ wizard
+crackmapexec+ wizard --help
 ```
 
-### Execution History
+### Execution History (Privacy-Preserving)
 ```bash
 crackmapexec+ history
+crackmapexec+ history --help
 ```
 
 ### Batch Projects
 ```bash
 crackmapexec+ batch lab_project.yaml
+crackmapexec+ batch --help
+```
+
+### Reporting
+```bash
+crackmapexec+ smb 192.168.1.0/24 --report
+crackmapexec+ report --help
 ```

@@ -1,5 +1,4 @@
-"""Unit tests for CLI parsing and command dispatching."""
-
+"""Unit tests for CLI parsing, help systems, and command dispatching."""
 
 from cmeplus.cli.parser import parse_and_execute
 
@@ -19,12 +18,117 @@ def test_cli_about(capsys):
     assert "CrackMapExec+" in captured.out
 
 
-def test_cli_help(capsys):
+def test_cli_global_help(capsys):
     ret = parse_and_execute(["--help"])
     assert ret == 0
     captured = capsys.readouterr()
     assert "Command & Workflow Reference" in captured.out
-    assert "Core Protocols:" in captured.out
+    assert "Protocols:" in captured.out
+    assert "--video" in captured.out
+    assert "--v" in captured.out
+
+
+def test_cli_protocol_help_smb(capsys):
+    ret = parse_and_execute(["smb", "--help"])
+    assert ret == 0
+    captured = capsys.readouterr()
+    assert "Protocol Reference: SMB" in captured.out
+    assert "--list-modules" in captured.out
+    assert "crackmapexec+ --video smb" in captured.out
+
+
+def test_cli_protocol_help_ldap(capsys):
+    ret = parse_and_execute(["ldap", "--help"])
+    assert ret == 0
+    captured = capsys.readouterr()
+    assert "Protocol Reference: LDAP" in captured.out
+    assert "crackmapexec+ --video ldap" in captured.out
+
+
+def test_cli_protocol_help_winrm(capsys):
+    ret = parse_and_execute(["winrm", "--help"])
+    assert ret == 0
+    captured = capsys.readouterr()
+    assert "Protocol Reference: WINRM" in captured.out
+    assert "crackmapexec+ --video winrm" in captured.out
+
+
+def test_cli_protocol_help_ssh(capsys):
+    ret = parse_and_execute(["ssh", "--help"])
+    assert ret == 0
+    captured = capsys.readouterr()
+    assert "Protocol Reference: SSH" in captured.out
+    assert "crackmapexec+ --video ssh" in captured.out
+
+
+def test_cli_command_help_workflows(capsys):
+    for cmd in ["wizard", "history", "batch", "report"]:
+        ret = parse_and_execute([cmd, "--help"])
+        assert ret == 0
+        captured = capsys.readouterr()
+        assert f"Command Help: {cmd.title()}" in captured.out
+
+
+def test_cli_video_smb_coming_soon(capsys):
+    ret = parse_and_execute(["--video", "smb"])
+    assert ret == 0
+    captured = capsys.readouterr()
+    assert "CrackMapExec+ Video Guide" in captured.out
+    assert "Coming Soon" in captured.out
+    assert "Start time:" in captured.out
+    assert "02:23" in captured.out
+
+
+def test_cli_video_short_alias_smb(capsys):
+    ret = parse_and_execute(["--v", "smb"])
+    assert ret == 0
+    captured = capsys.readouterr()
+    assert "CrackMapExec+ Video Guide" in captured.out
+    assert "Coming Soon" in captured.out
+    assert "02:23" in captured.out
+
+
+def test_cli_video_list(capsys):
+    ret = parse_and_execute(["--video", "list"])
+    assert ret == 0
+    captured = capsys.readouterr()
+    assert "Video Guide Library" in captured.out
+    assert "SMB" in captured.out
+    assert "02:23" in captured.out
+    assert "Coming Soon" in captured.out
+
+
+def test_cli_video_short_alias_list(capsys):
+    ret = parse_and_execute(["--v", "list"])
+    assert ret == 0
+    captured = capsys.readouterr()
+    assert "Video Guide Library" in captured.out
+    assert "LDAP" in captured.out
+
+
+def test_cli_video_search(capsys):
+    ret = parse_and_execute(["--video", "search", "smb"])
+    assert ret == 0
+    captured = capsys.readouterr()
+    assert "Search results for:" in captured.out
+    assert "SMB Guide" in captured.out
+    assert "crackmapexec+ --video smb" in captured.out
+
+
+def test_cli_video_unknown_topic(capsys):
+    ret = parse_and_execute(["--video", "banana"])
+    assert ret == 0
+    captured = capsys.readouterr()
+    assert "Unknown video topic: banana" in captured.out
+    assert "Available topics:" in captured.out
+    assert "crackmapexec+ --video list" in captured.out
+
+
+def test_cli_invalid_command(capsys):
+    ret = parse_and_execute(["unknowncommand123", "192.168.1.10"])
+    assert ret == 1
+    captured = capsys.readouterr()
+    assert "Unknown command or protocol" in captured.out
 
 
 def test_cli_explain_smb(capsys):
@@ -33,21 +137,6 @@ def test_cli_explain_smb(capsys):
     captured = capsys.readouterr()
     assert "Educational Protocol Guide: SMB" in captured.out
     assert "SMB Signing" in captured.out
-
-
-def test_cli_video_list(capsys):
-    ret = parse_and_execute(["--v", "list"])
-    assert ret == 0
-    captured = capsys.readouterr()
-    assert "Video Guide Catalog" in captured.out
-    assert "smb" in captured.out
-
-
-def test_cli_video_search(capsys):
-    ret = parse_and_execute(["--v", "search", "smb"])
-    assert ret == 0
-    captured = capsys.readouterr()
-    assert "SMB Guide" in captured.out
 
 
 def test_cli_list_modules_flag(capsys):

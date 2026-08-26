@@ -1,55 +1,79 @@
+introduction:
+  title: "Introduction to CrackMapExec+"
+  status: "coming_soon"
+  url: "https://youtube.com/watch?v=VIDEO_ID"
+  start_seconds: 0
+  description: "Overview of architecture, security lab workflows, and educational goals"
+  keywords: ["introduction", "overview", "basics", "lab"]
+
+installation:
+  title: "Installation & Setup Guide"
+  status: "coming_soon"
+  url: "https://youtube.com/watch?v=VIDEO_ID"
+  start_seconds: 45
+  description: "Virtual environments, editable installation, and Kali Linux configuration"
+  keywords: ["installation", "setup", "kali", "pip", "venv"]
+
 smb:
   title: "SMB Guide"
-  url: "https://www.youtube.com/watch?v=0_v4U_F6bY4"
-  start: 143
+  status: "coming_soon"
+  url: "https://youtube.com/watch?v=VIDEO_ID"
+  start_seconds: 143
   description: "SMB fundamentals, dialect negotiation, and authorized lab workflow"
-  tags: ["smb", "windows", "shares", "signing"]
+  keywords: ["smb", "windows", "shares", "signing", "recon"]
 
 ldap:
   title: "LDAP Guide"
-  url: "https://www.youtube.com/watch?v=0_v4U_F6bY4"
-  start: 375
+  status: "coming_soon"
+  url: "https://youtube.com/watch?v=VIDEO_ID"
+  start_seconds: 375
   description: "Active Directory LDAP fundamentals and authorized lab workflow"
-  tags: ["ldap", "active-directory", "domain", "recon"]
+  keywords: ["ldap", "active-directory", "domain", "recon"]
 
 winrm:
   title: "WinRM Guide"
-  url: "https://www.youtube.com/watch?v=0_v4U_F6bY4"
-  start: 612
+  status: "coming_soon"
+  url: "https://youtube.com/watch?v=VIDEO_ID"
+  start_seconds: 642
   description: "WinRM WS-Management remote administration and execution workflow"
-  tags: ["winrm", "powershell", "remote-management"]
+  keywords: ["winrm", "powershell", "remote-management", "wsman"]
 
 ssh:
   title: "SSH Guide"
-  url: "https://www.youtube.com/watch?v=0_v4U_F6bY4"
-  start: 840
+  status: "coming_soon"
+  url: "https://youtube.com/watch?v=VIDEO_ID"
+  start_seconds: 860
   description: "SSH secure shell exploration and lab host management"
-  tags: ["ssh", "linux", "keys", "pivoting"]
+  keywords: ["ssh", "linux", "keys", "pivoting"]
 
 modules:
   title: "Modules Guide"
-  url: "https://www.youtube.com/watch?v=0_v4U_F6bY4"
-  start: 1020
+  status: "coming_soon"
+  url: "https://youtube.com/watch?v=VIDEO_ID"
+  start_seconds: 1020
   description: "Extending CrackMapExec+ with custom post-enumeration modules"
-  tags: ["modules", "plugins", "custom", "python"]
+  keywords: ["modules", "plugins", "custom", "python", "shares", "users"]
 
 wizard:
   title: "Wizard Guide"
-  url: "https://www.youtube.com/watch?v=0_v4U_F6bY4"
-  start: 1215
+  status: "coming_soon"
+  url: "https://youtube.com/watch?v=VIDEO_ID"
+  start_seconds: 1110
   description: "Using the interactive job creation wizard for rapid task construction"
-  tags: ["wizard", "interactive", "beginner", "workflow"]
+  keywords: ["wizard", "interactive", "beginner", "workflow"]
 
 reporting:
   title: "Reporting & Dashboards"
-  url: "https://www.youtube.com/watch?v=0_v4U_F6bY4"
-  start: 1450
+  status: "coming_soon"
+  url: "https://youtube.com/watch?v=VIDEO_ID"
+  start_seconds: 1275
   description: "Generating modern HTML security dashboards and machine-readable JSON reports"
-  tags: ["reporting", "html", "json", "audit"]
+  keywords: ["reporting", "html", "json", "audit", "dashboard"]
 
 full-tutorial:
   title: "Full Masterclass Tutorial"
-  url: "https://www.youtube.com/watch?v=0_v4U_F6bY4"
-  start: 0
+  status: "coming_soon"
+  url: "https://youtube.com/watch?v=VIDEO_ID"
+  start_seconds: 0
   description: "Complete end-to-end CrackMapExec+ authorized lab walkthrough"
-  tags: ["tutorial", "overview", "masterclass", "intro"]
+  keywords: ["tutorial", "overview", "masterclass", "intro"]
