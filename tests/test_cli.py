@@ -1,5 +1,7 @@
 """Unit tests for CLI parsing, help systems, and command dispatching."""
 
+import json
+
 from cmeplus.cli.parser import parse_and_execute
 
 
@@ -26,6 +28,27 @@ def test_cli_global_help(capsys):
     assert "Protocols:" in captured.out
     assert "--video" in captured.out
     assert "--v" in captured.out
+    assert "doctor" in captured.out
+
+
+def test_cli_doctor(capsys):
+    ret = parse_and_execute(["doctor"])
+    assert ret == 0
+    captured = capsys.readouterr()
+    assert "CrackMapExec+ Doctor" in captured.out
+    assert "Python" in captured.out
+    assert "Package" in captured.out
+    assert "Config directory" in captured.out
+    assert "Video catalog" in captured.out
+    assert "Installation status:" in captured.out
+
+
+def test_cli_doctor_help(capsys):
+    ret = parse_and_execute(["doctor", "--help"])
+    assert ret == 0
+    captured = capsys.readouterr()
+    assert "Command Help: Doctor" in captured.out
+    assert "crackmapexec+ doctor" in captured.out
 
 
 def test_cli_protocol_help_smb(capsys):
@@ -34,6 +57,7 @@ def test_cli_protocol_help_smb(capsys):
     captured = capsys.readouterr()
     assert "Protocol Reference: SMB" in captured.out
     assert "--list-modules" in captured.out
+    assert "--verbose" in captured.out
     assert "crackmapexec+ --video smb" in captured.out
 
 
@@ -62,7 +86,7 @@ def test_cli_protocol_help_ssh(capsys):
 
 
 def test_cli_command_help_workflows(capsys):
-    for cmd in ["wizard", "history", "batch", "report"]:
+    for cmd in ["wizard", "history", "batch", "report", "doctor"]:
         ret = parse_and_execute([cmd, "--help"])
         assert ret == 0
         captured = capsys.readouterr()
@@ -147,6 +171,23 @@ def test_cli_list_modules_flag(capsys):
     assert "shares" in captured.out
 
 
+def test_cli_demo_mode_rich_smb_card(capsys):
+    ret = parse_and_execute(["--demo"])
+    assert ret == 0
+    captured = capsys.readouterr()
+    assert "CrackMapExec+ Safe Demo Mode" in captured.out
+    assert "SMB • 10.114.165.21" in captured.out
+    assert "STATUS" in captured.out
+    assert "SUCCESS" in captured.out
+    assert "LAB-DC" in captured.out
+    assert "Windows 10 / Server 2019" in captured.out
+    assert "17763" in captured.out
+    assert "LAB.ENTERPRISE.THM" in captured.out
+    assert "SMB2" in captured.out
+    assert "True" in captured.out
+    assert "Demo mode — no network traffic was generated." in captured.out
+
+
 def test_cli_mock_scan_execution(capsys):
     ret = parse_and_execute(["mock", "192.168.1.10,192.168.1.11"])
     assert ret == 0
@@ -154,6 +195,16 @@ def test_cli_mock_scan_execution(capsys):
     assert "192.168.1.10" in captured.out
     assert "SUCCESS" in captured.out
     assert "Completed: 2/2" in captured.out
+
+
+def test_cli_format_json_output(capsys):
+    ret = parse_and_execute(["mock", "192.168.1.10", "--format", "json"])
+    assert ret == 0
+    captured = capsys.readouterr()
+    parsed_json = json.loads(captured.out)
+    assert parsed_json["protocol"] == "mock"
+    assert parsed_json["total"] == 1
+    assert parsed_json["results"][0]["target"] == "192.168.1.10"
 
 
 def test_cli_multi_protocol_chaining(capsys):

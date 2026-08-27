@@ -1,0 +1,26 @@
+Source: crackmapexec-plus
+Section: net
+Priority: optional
+Maintainer: CodingM-eng <codingm-eng@users.noreply.github.com>
+Build-Depends: debhelper-compat (= 13),
+               dh-python,
+               python3-all,
+               python3-setuptools,
+               python3-wheel
+Standards-Version: 4.6.2
+Homepage: https://github.com/CodingM-eng/CrackMapExec-Plus
+Rules-Requires-Root: no
+
+Package: crackmapexec-plus
+Architecture: all
+Depends: ${misc:Depends},
+         ${python3:Depends},
+         python3-rich,
+         python3-yaml,
+         python3-pydantic
+Provides: cme+, cme-plus, crackmapexec+
+Description: Next-Generation Security Lab, CTF, and Educational Testing Framework
+ CrackMapExec+ is a modular, protocol-driven security testing framework
+ engineered for authorized penetration testing labs, CTF competitions,
+ and security education. It provides high-speed inspection of SMB, LDAP,
+ WinRM, and SSH endpoints with rich terminal reporting.

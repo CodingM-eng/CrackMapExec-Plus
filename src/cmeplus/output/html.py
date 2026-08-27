@@ -10,7 +10,7 @@ from cmeplus.core.results import ResultSet
 
 
 def generate_html_dashboard(result_sets: list[ResultSet] | ResultSet, title: str = "CrackMapExec+ Assessment Report") -> str:
-    """Generate self-contained, CSS-styled dark dashboard HTML report."""
+    """Generate self-contained, CSS-styled dark dashboard HTML report with rich host metadata."""
     if isinstance(result_sets, ResultSet):
         sets = [result_sets]
     else:
@@ -29,6 +29,30 @@ def generate_html_dashboard(result_sets: list[ResultSet] | ResultSet, title: str
         for res in rs.results:
             status_cls = res.status.value.lower()
             badge_text = res.status.value.upper()
+
+            detail_items = []
+            if res.hostname:
+                detail_items.append(f"<strong>Host:</strong> {html.escape(res.hostname)}")
+            if res.os:
+                os_str = res.os
+                if res.build:
+                    os_str += f" (Build {res.build})"
+                detail_items.append(f"<strong>OS:</strong> {html.escape(os_str)}")
+            if res.domain:
+                detail_items.append(f"<strong>Domain:</strong> {html.escape(res.domain)}")
+            if res.smb_dialect:
+                detail_items.append(f"<strong>SMB:</strong> {html.escape(res.smb_dialect)}")
+            if res.signing is not None:
+                sign_str = "Required" if res.signing else "Not Required"
+                detail_items.append(f"<strong>Signing:</strong> {sign_str}")
+
+            if detail_items:
+                formatted_detail = " • ".join(detail_items)
+                if res.message and res.message not in formatted_detail:
+                    formatted_detail += f"<br><small style='color:var(--text-muted)'>{html.escape(res.message)}</small>"
+            else:
+                formatted_detail = html.escape(res.message)
+
             row = f"""
             <tr class="status-{status_cls}">
                 <td><code>{html.escape(res.target)}</code></td>
@@ -36,7 +60,7 @@ def generate_html_dashboard(result_sets: list[ResultSet] | ResultSet, title: str
                 <td><span class="badge badge-proto">{html.escape(res.protocol.upper())}</span></td>
                 <td><span class="badge badge-{status_cls}">{html.escape(badge_text)}</span></td>
                 <td>{res.duration:.2f}s</td>
-                <td>{html.escape(res.message)}</td>
+                <td>{formatted_detail}</td>
             </tr>
             """
             rows_html.append(row)

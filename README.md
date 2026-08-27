@@ -14,237 +14,155 @@
 
 ## 📌 Project Overview & Status
 
-**Current Milestone**: `v0.1.0` (Core Architecture & Lab Baseline)
+**Current Milestone**: `v0.1.0` (Core Architecture, APT Packaging & Rich Protocol Engine)
 
-CrackMapExec+ is inspired by the protocol-oriented ergonomics of CrackMapExec and NetExec, but built with a completely independent, modern, clean-room architecture in typed Python 3.11+. It delivers a modular engine where CLI, Target parsing, Concurrency pools, Protocol adapters, Reporting, and Educational systems are decoupled.
+CrackMapExec+ is inspired by the protocol-oriented ergonomics of CrackMapExec and NetExec, but built with a completely independent, modern, clean-room architecture in typed Python 3.11+. It delivers a modular engine where CLI, Target parsing, Concurrency pools, Protocol adapters, Reporting, Diagnostics, and Educational systems are decoupled.
 
-### Current Implementation Status
-* ✅ **Target Engine**: Full IPv4/IPv6, CIDR blocks (`/24`, `/29`), octet ranges, comma-separated lists, and `@targets.txt` file parsing with comment stripping (`#`) and line-numbered diagnostics.
+### Current Capabilities & Features
+* ✅ **Global Standalone CLI**: Install globally via `pipx` or `./install.sh` without manual virtualenv activation.
+* ✅ **Debian / APT Packaging**: Native `.deb` build configuration (`debian/`) and APT repository generation tooling (`packaging/apt/`).
+* ✅ **🩺 Doctor Diagnostics (`doctor`)**: Environment, PATH, and configuration health check with actionable troubleshooting guidance.
+* ✅ **💎 Rich SMB Metadata Engine**: Non-intrusive NTLMSSP challenge analysis extracting authentic Hostname, Domain, Forest, OS Build, Dialect (`SMB 2.0.2` - `SMB 3.1.1`), and Signing requirements with adaptive terminal cards.
+* ✅ **Target Engine**: IPv4/IPv6, CIDR blocks (`/24`, `/29`), octet ranges, comma-separated lists, and `@targets.txt` file parsing with comment stripping (`#`) and line-numbered diagnostics.
 * ✅ **Job & Worker Engine**: Multi-protocol job chaining, bounded concurrency thread pool, exception isolation, and graceful cancellation.
-* ✅ **SMB Protocol Baseline**: Safe RFC-compliant SMB2/3 negotiation probe (`SMB 2.0.2` to `SMB 3.1.1`) and SMB signing verification.
-* ✅ **Protocol Adapters**: Structural drivers for `ldap`, `winrm`, and `ssh` with capability declarations.
+* ✅ **Protocol Adapters**: Drivers for `smb`, `ldap`, `winrm`, and `ssh` with capability declarations.
 * ✅ **Module System**: Pluggable post-enumeration modules (`shares`, `users`, `passpol`) via `-L` and `-M`.
-* ✅ **🎥 Video Guide Center (`--v`)**: Built-in interactive and deep-linked tutorial system with timestamp URL calculations.
+* ✅ **🎥 Video Guide Center (`--video` / `--v`)**: Built-in interactive tutorial system with timestamp URL calculations.
 * ✅ **🧙 Interactive Wizard (`wizard`)**: Terminal prompts that compile user choices into standard executable jobs.
 * ✅ **🛡️ Safe Demo Simulator (`--demo`)**: 100% offline, zero-network seminar and workshop presentation mode.
-* ✅ **📊 Multi-Format Reporting (`--report`)**: Machine-readable JSON and modern dark security-dashboard HTML bundles.
+* ✅ **📊 Multi-Format Reporting (`--report`, `--format json`)**: Machine-readable JSON and modern dark security-dashboard HTML bundles.
 * ✅ **🔒 Credential Hygiene & History (`history`)**: Local SQLite metadata tracking that strictly forbids saving passwords or hashes.
 
 ---
 
-## 🏗️ Architecture Overview
+## 📦 Installation Options
 
-```text
-┌────────────────────────────────────────────────────────┐
-│                   CLI Entry Points                     │
-│    crackmapexec+ [smb|ldap|winrm|ssh|wizard|batch]     │
-│    --v [topic] | --explain <proto> | --demo | history  │
-└───────────────────────────┬────────────────────────────┘
-                            │
-┌───────────────────────────▼────────────────────────────┐
-│                    Target Engine                       │
-│ (IP, CIDR, Ranges, @file, Validation, Deduplication)   │
-└───────────────────────────┬────────────────────────────┘
-                            │
-┌───────────────────────────▼────────────────────────────┐
-│                      Job Engine                        │
-│          (Job, JobQueue, WorkerPool, Concurrency)      │
-└───────────────────────────┬────────────────────────────┘
-                            │
-┌───────────────────────────▼────────────────────────────┐
-│                   Protocol Engine                      │
-│     (BaseProtocol, ProtocolManager, SMB, LDAP, etc.)   │
-└───────────────────────────┬────────────────────────────┘
-                            │
-┌───────────────────────────▼────────────────────────────┐
-│                    Result Engine                       │
-│    (Structured Result, ResultSet, Typed Statuses)      │
-└─────────┬───────────────────────────────┬──────────────┘
-          │                               │
-┌─────────▼──────────────┐   ┌────────────▼──────────────┐
-│     Output Engine      │   │     Reporting Engine      │
-│  (Rich UI, SSH-friendly)│   │       (JSON + HTML)       │
-└────────────────────────┘   └───────────────────────────┘
-```
+### Option 1: One-Command Automated Installer (Recommended for Cloned Repo)
 
-For an in-depth comparative analysis against upstream tools, see [docs/upstream-analysis.md](docs/upstream-analysis.md).
-
----
-
-## 📂 Project Structure
-
-```text
-crackmapexec-plus/
-├── src/
-│   └── cmeplus/
-│       ├── __init__.py
-│       ├── __main__.py
-│       ├── cli/                 # CLI parsing, subcommands & interactive menus
-│       │   ├── __init__.py
-│       │   ├── parser.py
-│       │   ├── commands.py
-│       │   ├── wizard.py
-│       │   └── interactive.py
-│       ├── core/                # Core engine & job orchestration
-│       │   ├── __init__.py
-│       │   ├── engine.py
-│       │   ├── context.py
-│       │   ├── targets.py
-│       │   ├── jobs.py
-│       │   ├── workers.py
-│       │   ├── results.py
-│       │   └── exceptions.py
-│       ├── protocols/           # Protocol drivers (SMB, LDAP, WinRM, SSH, Mock)
-│       │   ├── __init__.py
-│       │   ├── base.py
-│       │   ├── manager.py
-│       │   ├── smb.py
-│       │   ├── ldap.py
-│       │   ├── winrm.py
-│       │   ├── ssh.py
-│       │   └── mock.py
-│       ├── modules/             # Post-enumeration module system
-│       │   ├── __init__.py
-│       │   ├── base.py
-│       │   ├── manager.py
-│       │   └── builtin/
-│       ├── video/               # Video Guide Center & catalog
-│       │   ├── __init__.py
-│       │   ├── models.py
-│       │   ├── manager.py
-│       │   └── videos.yaml
-│       ├── config/              # Configuration loaders & defaults
-│       │   ├── __init__.py
-│       │   ├── loader.py
-│       │   └── defaults.yaml
-│       ├── history/             # Privacy-preserving SQLite execution log
-│       │   ├── __init__.py
-│       │   └── manager.py
-│       ├── output/              # Rich console presentation & formatters
-│       │   ├── __init__.py
-│       │   ├── console.py
-│       │   ├── tables.py
-│       │   ├── json.py
-│       │   └── html.py
-│       ├── reports/             # HTML dashboard & JSON report generators
-│       │   ├── __init__.py
-│       │   └── generator.py
-│       └── demo/                # Zero-packet seminar simulator
-│           ├── __init__.py
-│           ├── engine.py
-│           └── scenarios/
-├── tests/                       # Complete pytest unit & regression test suite
-├── docs/                        # In-depth architectural & usage documentation
-├── examples/                    # Sample target lists and batch configurations
-├── pyproject.toml               # Modern build configuration & entry points
-├── setup.py                     # Legacy compatibility shim
-├── README.md
-├── LICENSE
-└── .gitignore
-```
-
----
-
-## 📦 Installation (Kali Linux / Debian / macOS / Windows)
-
-### Standard Setup
+Clone the repository and run the idempotent installer (automatically configures `pipx` and system PATH):
 
 ```bash
-# 1. Clone the repository
 git clone https://github.com/CodingM-eng/CrackMapExec-Plus.git
 cd CrackMapExec-Plus
+./install.sh
+```
 
-# 2. Create and activate a virtual environment
+### Option 2: Direct Global Install via pipx (No Git Clone Required)
+
+Install directly into an isolated global environment:
+
+```bash
+pipx install git+https://github.com/CodingM-eng/CrackMapExec-Plus.git
+```
+
+### Option 3: Debian / Kali Package (`.deb`)
+
+Build and install the native Debian package:
+
+```bash
+# Build package
+./packaging/build_deb.sh
+
+# Install .deb
+sudo apt install ../crackmapexec-plus_0.1.0-1_all.deb
+```
+*(See [docs/debian-packaging.md](docs/debian-packaging.md) for APT repository hosting and installation).*
+
+### Option 4: Development / Editable Mode
+
+For developers modifying the codebase:
+
+```bash
 python3 -m venv .venv
-source .venv/bin/activate  # On Linux / macOS
-# .venv\Scripts\activate   # On Windows PowerShell
-
-# 3. Install in editable mode
-python -m pip install -e .
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+pip install -e ".[dev]"
 ```
 
-Verify binary entry points:
+---
+
+## 🩺 Health Check & Diagnostics
+
+Run the built-in diagnostic doctor to verify that Python, packages, CLI entry points, and configuration files are properly configured:
 
 ```bash
-crackmapexec+ --version
-cme+ --version
+crackmapexec+ doctor
+# or
+cme+ doctor
 ```
 
-Both console scripts will output:
+Output:
 ```text
-CrackMapExec+ 0.1.0
+╭──────────── CrackMapExec+ Doctor ────────────╮
+│ Python              ✓ v3.12.8 (CPython)      │
+│ Package             ✓ v0.1.0                 │
+│ crackmapexec+ PATH  ✓ /usr/local/bin/...     │
+│ cme+ PATH           ✓ /usr/local/bin/...     │
+│ Config directory    ✓ ~/.config/...          │
+│ Video catalog       ✓ 10 topics loaded       │
+│                                              │
+│ Installation status: HEALTHY                 │
+╰──────────────────────────────────────────────╯
 ```
 
 ---
 
-## 🔧 Troubleshooting: `command not found`
+## ⚡ CLI Usage & Protocol Probes
 
-If your shell reports `command not found: crackmapexec+` or `cme+`:
+### 1. Rich SMB Host Inspection
 
-1. **Verify Virtual Environment Activation**:
-   Confirm that your prompt shows `(.venv)` and that `.venv/bin` is in your `$PATH`:
-   ```bash
-   which crackmapexec+
-   which cme+
-   ```
-   If nothing is returned, reactivate the environment:
-   ```bash
-   source .venv/bin/activate
-   ```
-
-2. **Verify Package Installation Metadata**:
-   Check if the package is installed and editable:
-   ```bash
-   python -m pip show crackmapexec-plus
-   ```
-
-3. **Direct Python Module Invocation**:
-   You can always invoke CrackMapExec+ directly via Python, regardless of shell path configuration:
-   ```bash
-   python -m cmeplus --version
-   python -m cmeplus --help
-   python -m cmeplus --about
-   ```
-
-4. **Explicit Virtual Environment Binary**:
-   ```bash
-   ./.venv/bin/crackmapexec+ --version   # Linux / macOS
-   .\.venv\Scripts\crackmapexec+.exe --version  # Windows
-   ```
-
----
-
-## ⚡ CLI Examples & Workflows
-
-### 1. Basic Protocol Probes
+Perform safe, authentic SMB negotiation and NTLMSSP metadata discovery:
 
 ```bash
-# Single target SMB probe
-crackmapexec+ smb 192.168.1.10
+crackmapexec+ smb 10.114.165.21
+```
 
+**Rich Terminal Output (Wide Terminal $\ge 70$ cols):**
+```text
+╭──────────────────────────────────────────────────────────────╮
+│ SMB • 10.114.165.21:445                                      │
+╰──────────────────────────────────────────────────────────────╯
+
+STATUS        [+] SUCCESS
+HOST          LAB-DC
+OS            Windows 10 / Server 2019
+BUILD         17763
+ARCH          x64
+DOMAIN        LAB.ENTERPRISE.THM
+SMB           SMB 3.1.1
+SIGNING       True
+SMBv1         False
+LATENCY       0.16s
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Completed: 1/1  Success: 1  Failed/Unavailable: 0  Duration: 0.16s
+```
+
+**Verbose Mode (`--verbose`):**
+Displays additional Tier-3 metadata including DNS FQDN, Forest, Server Capabilities, and System Timestamp:
+```bash
+crackmapexec+ smb 10.114.165.21 --verbose
+```
+
+### 2. Multi-Target & Range Probes
+
+```bash
 # Comma-separated targets
 crackmapexec+ smb 192.168.1.10,192.168.1.11,192.168.1.12
 
-# Subnet CIDR expansion
+# Subnet CIDR expansion with 8 workers
 crackmapexec+ smb 192.168.1.0/24 --workers 8
 
 # Target list file with comments
 crackmapexec+ smb @targets.txt
 ```
 
-### 2. Multi-Protocol Job Chaining
-
-Chain multiple protocols across different target ranges in a single invocation:
+### 3. Machine Output & JSON Export
 
 ```bash
-crackmapexec+ \
-  smb 192.168.1.10,192.168.1.11 \
-  ldap 192.168.1.20 \
-  winrm 192.168.1.30 \
-  --report
+crackmapexec+ smb 192.168.1.10 --format json
 ```
 
-### 3. Video Guide Center (`--video` / `--v`)
+### 4. Video Guide Center (`--video` / `--v`)
 
 ```bash
 # Open interactive Video Center menu
@@ -256,11 +174,6 @@ crackmapexec+ --video smb
 crackmapexec+ --video ldap
 crackmapexec+ --video winrm
 crackmapexec+ --video ssh
-crackmapexec+ --video modules
-crackmapexec+ --video wizard
-crackmapexec+ --video reporting
-crackmapexec+ --video installation
-crackmapexec+ --video introduction
 
 # Search video catalog by keyword
 crackmapexec+ --video search "active directory"
@@ -268,21 +181,20 @@ crackmapexec+ --video search "active directory"
 # List all available catalog topics and timestamps
 crackmapexec+ --video list
 ```
-*(Note: Video tutorials are currently marked as **🚧 Coming Soon** while in active preparation; placeholder URLs are presented safely without premature browser launching).*
 
-### 4. Interactive Wizard
+### 5. Interactive Wizard
 
 ```bash
 crackmapexec+ wizard
 ```
 
-### 5. Safe Seminar Demo Simulation
+### 6. Safe Seminar Demo Simulation
 
 ```bash
 crackmapexec+ --demo
 ```
 
-### 6. HTML & JSON Reporting
+### 7. HTML & JSON Reporting
 
 ```bash
 crackmapexec+ smb 192.168.1.0/24 --report
@@ -291,18 +203,12 @@ Generates reports in `reports/scan-YYYY-MM-DD-HH-MM-SS/` containing `report.json
 
 ---
 
-## 🧪 Testing & Development
+## 🧪 Testing & Verification
 
-Run the full automated test suite and linter:
+Run the full automated test suite (72 tests) and linter:
 
 ```bash
-# Install development dependencies
-python -m pip install -e ".[dev]"
-
-# Run test suite
 pytest -v tests/
-
-# Run linter
 ruff check src/ tests/
 ```
 
@@ -311,8 +217,8 @@ ruff check src/ tests/
 ## 📚 Documentation Reference
 
 * [Architecture & Design](docs/architecture.md)
-* [Upstream NetExec Analysis](docs/upstream-analysis.md)
 * [Installation Guide](docs/installation.md)
+* [Debian Packaging & APT Guide](docs/debian-packaging.md)
 * [CLI Reference](docs/cli.md)
 * [Protocol Drivers](docs/protocols.md)
 * [Modules Guide](docs/modules.md)

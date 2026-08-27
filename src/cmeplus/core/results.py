@@ -49,6 +49,7 @@ class ResultState(str, Enum):
 @dataclass
 class Result:
     """Represents the structured outcome of executing a protocol/module against a single target."""
+
     target: str
     protocol: str
     status: ResultState
@@ -63,23 +64,80 @@ class Result:
     def is_success(self) -> bool:
         return self.status == ResultState.SUCCESS
 
+    @property
+    def hostname(self) -> str | None:
+        return self.data.get("hostname")
+
+    @property
+    def os(self) -> str | None:
+        return self.data.get("os")
+
+    @property
+    def build(self) -> str | None:
+        return self.data.get("build")
+
+    @property
+    def architecture(self) -> str | None:
+        return self.data.get("architecture")
+
+    @property
+    def domain(self) -> str | None:
+        return self.data.get("domain")
+
+    @property
+    def smb_dialect(self) -> str | None:
+        return self.data.get("smb_dialect") or self.data.get("smb_version")
+
+    @property
+    def signing(self) -> bool | None:
+        if "signing" in self.data:
+            return bool(self.data["signing"])
+        if "signing_required" in self.data:
+            return bool(self.data["signing_required"])
+        return None
+
+    @property
+    def smbv1(self) -> bool | None:
+        return self.data.get("smbv1", False)
+
     def to_dict(self) -> dict[str, Any]:
-        return {
+        res: dict[str, Any] = {
             "target": self.target,
             "port": self.port,
             "protocol": self.protocol,
             "status": self.status.value,
             "duration": round(self.duration, 4),
             "message": self.message,
-            "data": self.data,
-            "timestamp": self.timestamp.isoformat(),
-            "error_detail": self.error_detail,
         }
+
+        # Surface structured metadata fields if present
+        for key in [
+            "hostname",
+            "os",
+            "build",
+            "architecture",
+            "domain",
+            "smb_dialect",
+            "signing",
+            "smbv1",
+            "dns_fqdn",
+            "dns_forest",
+            "server_time",
+            "capabilities",
+        ]:
+            if key in self.data and self.data[key] is not None and self.data[key] != "":
+                res[key] = self.data[key]
+
+        res["data"] = self.data
+        res["timestamp"] = self.timestamp.isoformat()
+        res["error_detail"] = self.error_detail
+        return res
 
 
 @dataclass
 class ResultSet:
     """Container for multiple execution results with statistical aggregations."""
+
     job_id: str = ""
     protocol: str = ""
     results: list[Result] = field(default_factory=list)

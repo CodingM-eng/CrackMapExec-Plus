@@ -115,6 +115,7 @@ def handle_protocol_help(protocol: str, console: OutputConsole) -> None:
     content.append(f"  --port <port>            Override default service port (default: {port_info})\n", style="white")
     content.append("  -L, --list-modules       List available post-enumeration modules\n", style="white")
     content.append("  -M, --module <name>      Execute post-enumeration module\n", style="white")
+    content.append("  --verbose                Display verbose Tier-3 metadata (DNS, Forest, Caps)\n", style="white")
     content.append("  --workers <N>            Concurrent worker threads (default: 4)\n", style="white")
     content.append("  --timeout <sec>          Connection timeout in seconds (default: 5.0)\n", style="white")
     content.append("  --report                 Generate HTML dashboard and JSON report bundle\n\n", style="white")
@@ -123,7 +124,7 @@ def handle_protocol_help(protocol: str, console: OutputConsole) -> None:
     content.append(f"  crackmapexec+ {proto} 192.168.1.10\n", style="dim white")
     content.append(f"  crackmapexec+ {proto} 192.168.1.10,192.168.1.11 -u admin -p 'Pass123'\n", style="dim white")
     content.append(f"  crackmapexec+ {proto} @targets.txt -L\n", style="dim white")
-    content.append(f"  crackmapexec+ {proto} 192.168.1.0/24 --workers 8 --report\n\n", style="dim white")
+    content.append(f"  crackmapexec+ {proto} 192.168.1.0/24 --workers 8 --verbose --report\n\n", style="dim white")
 
     content.append("Learning & Video Guides:\n", style="bold cyan")
     content.append(f"  crackmapexec+ --video {proto}\n", style="bold green")
@@ -134,7 +135,7 @@ def handle_protocol_help(protocol: str, console: OutputConsole) -> None:
 
 
 def handle_command_help(command: str, console: OutputConsole) -> None:
-    """Display dedicated help for workflow commands (wizard, history, batch, report)."""
+    """Display dedicated help for workflow commands (wizard, history, batch, report, doctor)."""
     cmd = command.lower().strip().lstrip("-")
     content = Text()
 
@@ -178,6 +179,14 @@ def handle_command_help(command: str, console: OutputConsole) -> None:
         content.append("Learning:\n", style="bold cyan")
         content.append("  crackmapexec+ --video reporting\n", style="bold green")
 
+    elif cmd == "doctor":
+        content.append("CrackMapExec+ Installation Doctor\n\n", style="bold white")
+        content.append("Usage:\n", style="bold cyan")
+        content.append("  crackmapexec+ doctor\n\n", style="bold yellow")
+        content.append("Description:\n", style="bold cyan")
+        content.append("  Diagnoses environment health, PATH discovery, configuration files,\n", style="white")
+        content.append("  and video catalog integrity with actionable fix instructions.\n\n", style="white")
+
     else:
         content.append(f"CrackMapExec+ Command: {cmd}\n\n", style="bold white")
         content.append("Run 'crackmapexec+ --help' for general usage.\n", style="white")
@@ -192,7 +201,6 @@ def handle_video_command(args: list[str], console: OutputConsole) -> None:
     ui = VideoGuideUI(engine=v_engine, console=console.console)
 
     if not args or len(args) == 0:
-        # Interactive mode
         ui.run_interactive_menu()
         return
 
@@ -253,7 +261,6 @@ def handle_video_command(args: list[str], console: OutputConsole) -> None:
     if item:
         ui.show_topic_card(item)
     else:
-        # Unknown video topic as per Section 13 specification
         available_topics = "\n".join(f"  {i.key}" for i in v_engine.list_all())
         console.console.print(f"[bold red]Unknown video topic: {sub}[/bold red]\n")
         console.console.print(f"[bold cyan]Available topics:[/bold cyan]\n{available_topics}\n")
@@ -333,7 +340,6 @@ def handle_batch_project(yaml_path_str: str, console: OutputConsole, engine: Eng
         )
         plan.add_job(job)
 
-    # Show preview
     console.console.print(TableRenderer.render_batch_preview(proj_name, plan.jobs))
     should_run = Confirm.ask("\n[bold green]Continue batch execution?[/bold green]", default=True)
     if should_run:

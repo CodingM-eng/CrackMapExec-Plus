@@ -26,6 +26,7 @@ from cmeplus.cli.commands import (
     handle_video_command,
     handle_wizard,
 )
+from cmeplus.cli.doctor import handle_doctor
 from cmeplus.config.loader import ConfigLoader
 from cmeplus.core.context import ExecutionContext
 from cmeplus.core.engine import Engine
@@ -33,6 +34,7 @@ from cmeplus.core.exceptions import CMEPlusError
 from cmeplus.core.jobs import Job, JobCredentials, JobPlan
 from cmeplus.core.targets import TargetEngine
 from cmeplus.output.console import OutputConsole
+from cmeplus.output.json import format_json_results
 from cmeplus.output.tables import TableRenderer
 
 
@@ -61,17 +63,19 @@ def print_categorized_help(console: Console) -> None:
     menu.append("  winrm     WinRM workflow & WS-Man administration\n", style="white")
     menu.append("  ssh       SSH workflow & secure shell exploration\n\n", style="white")
 
-    menu.append("Workflow:\n", style="bold cyan")
+    menu.append("Workflow & Tools:\n", style="bold cyan")
     menu.append("  wizard    Interactive command builder\n", style="white")
     menu.append("  history   Execution history (metadata only)\n", style="white")
-    menu.append("  batch     Run a saved multi-job project\n\n", style="white")
+    menu.append("  batch     Run a saved multi-job project\n", style="white")
+    menu.append("  doctor    Environment & PATH installation health check\n\n", style="white")
 
     menu.append("Learning:\n", style="bold cyan")
     menu.append("  --video   Video Guide Center (e.g. --video smb, --video list)\n", style="white")
     menu.append("  --v       Short alias for --video\n", style="white")
     menu.append("  --explain In-depth educational protocol explanation\n\n", style="white")
 
-    menu.append("Output:\n", style="bold cyan")
+    menu.append("Output & Options:\n", style="bold cyan")
+    menu.append("  --verbose Detailed Tier-3 service metadata (DNS, Forest, Caps)\n", style="white")
     menu.append("  --report  Generate HTML dashboard and JSON report bundle\n", style="white")
     menu.append("  --format  Select output format: console (default), json, quiet\n\n", style="white")
 
@@ -112,7 +116,7 @@ def parse_and_execute(argv: list[str] | None = None) -> int:
     if "--video" in argv or "--v" in argv:
         flag = "--video" if "--video" in argv else "--v"
         idx = argv.index(flag)
-        v_args = argv[idx + 1:]
+        v_args = argv[idx + 1 :]
         handle_video_command(v_args, console_out)
         return 0
 
@@ -122,7 +126,7 @@ def parse_and_execute(argv: list[str] | None = None) -> int:
         return 0
 
     # 4. Check for top-level non-protocol commands / flags
-    if "--version" in argv or argv == ["-version"] or argv == ["-v"]:
+    if "--version" in argv or argv == ["-version"]:
         handle_version(console_out)
         return 0
 
@@ -134,6 +138,12 @@ def parse_and_execute(argv: list[str] | None = None) -> int:
         handle_demo(console_out)
         return 0
 
+    if first_arg == "doctor":
+        if "--help" in argv or "-h" in argv:
+            handle_command_help("doctor", console_out)
+            return 0
+        return handle_doctor(console_out)
+
     if "--explain" in argv:
         idx = argv.index("--explain")
         proto = argv[idx + 1] if idx + 1 < len(argv) else "smb"
@@ -142,7 +152,7 @@ def parse_and_execute(argv: list[str] | None = None) -> int:
         return 0
 
     # 5. Check for workflow commands with --help
-    if first_arg in ("wizard", "history", "batch") and ("--help" in argv or "-h" in argv):
+    if first_arg in ("wizard", "history", "batch", "doctor") and ("--help" in argv or "-h" in argv):
         handle_command_help(first_arg, console_out)
         return 0
 
@@ -187,13 +197,18 @@ def parse_and_execute(argv: list[str] | None = None) -> int:
         console_out.print_info("Run 'crackmapexec+ --help' to see all available commands.")
         return 1
 
-    # Extract global flags: --workers, --timeout, --report, --format
+    # Extract global flags: --workers, --timeout, --report, --format, --verbose
     workers = app_config.workers
     timeout = app_config.timeout
     report_enabled = False
     output_format = app_config.output_format
+    verbose = False
 
     clean_argv = list(argv)
+    if "--verbose" in clean_argv:
+        verbose = True
+        clean_argv.remove("--verbose")
+
     if "--report" in clean_argv:
         report_enabled = True
         clean_argv.remove("--report")
@@ -222,12 +237,17 @@ def parse_and_execute(argv: list[str] | None = None) -> int:
             output_format = clean_argv[f_idx + 1]
             del clean_argv[f_idx : f_idx + 2]
 
+    console_out.verbose = verbose
+    if output_format in ("json", "quiet"):
+        console_out.quiet = True
+
     exec_context = ExecutionContext(
+        verbose=verbose,
         workers=workers,
         timeout=timeout,
         report_enabled=report_enabled,
         output_format=output_format,
-        quiet=(output_format == "quiet"),
+        quiet=(output_format in ("quiet", "json")),
     )
     engine = Engine(config=app_config, context=exec_context, console=console_out)
 
@@ -307,10 +327,14 @@ def parse_and_execute(argv: list[str] | None = None) -> int:
         return 1
 
     if len(jobs) == 1:
-        engine.run_job(jobs[0])
+        res = engine.run_job(jobs[0])
+        if output_format == "json":
+            print(format_json_results(res))
     else:
         plan = JobPlan(name="Multi-Protocol Execution", jobs=jobs)
-        engine.run_plan(plan)
+        res_list = engine.run_plan(plan)
+        if output_format == "json":
+            print(format_json_results(res_list))
 
     return 0
 

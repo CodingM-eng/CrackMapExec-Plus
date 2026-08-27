@@ -1,43 +1,57 @@
 # Safe Seminar Simulation Scenario Data (100% Mock / Zero Network Activity)
 scenario_name: "MegaCorp Authorized CTF Lab"
-domain: "CORP.LOCAL"
+domain: "LAB.ENTERPRISE.THM"
 
 targets:
-  - ip: "192.168.56.10"
-    hostname: "DC01"
-    os: "Windows Server 2022 Datacenter Build 20348 (x64)"
+  - ip: "10.114.165.21"
+    hostname: "LAB-DC"
+    os: "Windows 10 / Server 2019"
+    build: "17763"
+    architecture: "x64"
+    domain: "LAB.ENTERPRISE.THM"
     protocol: "smb"
     port: 445
-    smb_version: "SMB 3.1.1"
+    smb_version: "SMB2"
+    smb_dialect: "SMB2"
     signing: true
+    smbv1: false
     status: "success"
-    message: "[Pwn3d!] (name:DC01) (domain:CORP.LOCAL) (signing:True) (SMBv3.1.1)"
+    duration: 0.16
+    message: "Connected (SMB2) (Signing: REQUIRED)"
     shares: ["ADMIN$", "C$", "IPC$", "NETLOGON", "SYSVOL", "Backups"]
     users: ["Administrator", "krbtgt", "svc_backup", "jdoe", "asmith"]
 
-  - ip: "192.168.56.11"
+  - ip: "10.114.165.22"
     hostname: "FS01"
-    os: "Windows Server 2019 Standard (x64)"
+    os: "Windows Server 2019 Standard"
+    build: "17763"
+    architecture: "x64"
+    domain: "LAB.ENTERPRISE.THM"
     protocol: "smb"
     port: 445
     smb_version: "SMB 3.0"
+    smb_dialect: "SMB 3.0"
     signing: false
+    smbv1: false
     status: "success"
-    message: "[+] (name:FS01) (domain:CORP.LOCAL) (signing:False) (SMBv3.0)"
+    duration: 0.12
+    message: "Connected (SMB 3.0) (Signing: False)"
     shares: ["C$", "Finance", "HR", "SharedDocs"]
     users: ["Administrator", "local_admin"]
 
-  - ip: "192.168.56.20"
+  - ip: "10.114.165.30"
     hostname: "DEV-WS01"
     os: "Windows 11 Pro Build 22631 (x64)"
     protocol: "winrm"
     port: 5985
     status: "success"
-    message: "[+] WinRM HTTP active (PowerShell 7.4 Remoting endpoint)"
+    duration: 0.08
+    message: "WinRM HTTP active (PowerShell 7.4 Remoting endpoint)"
 
-  - ip: "192.168.56.254"
+  - ip: "10.114.165.254"
     hostname: "OFFLINE-HOST"
     protocol: "smb"
     port: 445
     status: "unavailable"
+    duration: 0.01
     message: "Connection refused (Simulated Host Offline)"

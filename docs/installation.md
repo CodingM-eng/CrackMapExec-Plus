@@ -1,111 +1,91 @@
-# Installation & Troubleshooting Guide
+# Installation Guide
 
-CrackMapExec+ requires Python 3.11 or higher and runs natively on Linux (especially Kali Linux, Parrot OS, Debian, Ubuntu), macOS, and Windows.
+CrackMapExec+ can be installed across Kali Linux, Debian, Ubuntu, macOS, and Windows.
 
 ---
 
-## Standard Installation (Kali Linux / Linux / macOS)
+## 🚀 Recommended: One-Command Automated Installer
+
+If you have cloned the repository, run `./install.sh`:
 
 ```bash
-# 1. Ensure Python 3.11+ and venv are installed
-sudo apt update && sudo apt install -y python3 python3-pip python3-venv git
-
-# 2. Clone the repository
 git clone https://github.com/CodingM-eng/CrackMapExec-Plus.git
 cd CrackMapExec-Plus
+./install.sh
+```
 
-# 3. Create and activate a dedicated virtual environment
+### What `./install.sh` does:
+1. **Python Detection**: Verifies Python 3.10+ runtime.
+2. **Distro Detection**: Detects Kali, Debian, Ubuntu, Fedora, Arch, Alpine, or macOS.
+3. **Automatic pipx Setup**: Detects or installs `pipx` via system package manager if missing.
+4. **PATH Configuration**: Executes `pipx ensurepath` to configure `~/.local/bin`.
+5. **Idempotent Installation**: Installs `crackmapexec-plus` into an isolated virtual environment while making CLI entry points (`crackmapexec+` and `cme+`) globally available in your shell.
+6. **Verification**: Validates entry points and prints a completion card.
+
+---
+
+## 🌐 Direct Global Install via pipx (Without Git Clone)
+
+You can install CrackMapExec+ directly from GitHub into a managed isolated environment:
+
+```bash
+pipx install git+https://github.com/CodingM-eng/CrackMapExec-Plus.git
+```
+
+To upgrade later:
+```bash
+pipx upgrade crackmapexec-plus
+```
+
+---
+
+## 📦 Debian / Kali Native Package (`.deb`)
+
+### Building from Source:
+```bash
+sudo apt-get update
+sudo apt-get install -y build-essential debhelper dh-python python3-all python3-setuptools python3-wheel
+./packaging/build_deb.sh
+```
+
+### Installing the `.deb`:
+```bash
+sudo apt install ../crackmapexec-plus_0.1.0-1_all.deb
+```
+
+### APT Repository:
+See [`docs/debian-packaging.md`](debian-packaging.md) for full APT repository setup and signing instructions.
+
+---
+
+## 🛠️ Development & Editable Mode
+
+If you are developing or contributing to CrackMapExec+:
+
+```bash
+# 1. Create virtual environment
 python3 -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
-# 4. Install in editable mode
-python -m pip install -e .
+# 2. Install editable package with dev dependencies
+pip install -e ".[dev]"
 ```
 
-Verify binary entry points:
-
+Or using `pipx` editable mode:
 ```bash
-crackmapexec+ --version
-cme+ --version
-```
-
-Expected output:
-```text
-CrackMapExec+ 0.1.0
+pipx install --editable .
 ```
 
 ---
 
-## Windows Installation
+## 🩺 Diagnostic Tool: `crackmapexec+ doctor`
 
-In PowerShell (with Python 3.11+ installed):
-
-```powershell
-# 1. Clone repository
-git clone https://github.com/CodingM-eng/CrackMapExec-Plus.git
-cd CrackMapExec-Plus
-
-# 2. Create virtual environment
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-
-# 3. Install in editable mode
-python -m pip install -e .
-
-# 4. Verify entry points
-& "crackmapexec+" --version
-& "cme+" --version
-```
-
----
-
-## Troubleshooting: `command not found`
-
-If running `crackmapexec+` or `cme+` produces `command not found` or is unresolvable:
-
-### 1. Check Virtualenv Activation & PATH
-Verify that your active shell PATH includes the virtualenv binary directory:
+Run the built-in diagnostic tool to verify environment health and PATH discovery:
 
 ```bash
-which crackmapexec+
-which cme+
+crackmapexec+ doctor
+# or
+cme+ doctor
 ```
 
-If these return empty, verify that your virtual environment is active:
-```bash
-source .venv/bin/activate
-```
-
-### 2. Verify Package Metadata
-Check that pip has successfully registered the package in the current environment:
-
-```bash
-python -m pip show crackmapexec-plus
-```
-
-### 3. Run Directly via Module
-CrackMapExec+ provides a full module execution wrapper that bypasses shell path resolution:
-
-```bash
-python -m cmeplus --version
-python -m cmeplus --about
-python -m cmeplus --help
-```
-
-### 4. Execute Virtualenv Binary Directly
-```bash
-./.venv/bin/crackmapexec+ --version      # Linux / macOS
-.\.venv\Scripts\crackmapexec+.exe --version  # Windows
-```
-
----
-
-## Development Dependencies
-
-To run test suites and linting checks:
-
-```bash
-python -m pip install -e ".[dev]"
-pytest -v tests/
-ruff check src/ tests/
-```
+If an executable is installed in `~/.local/bin` but not available in your shell, `doctor` provides the exact remedial command (e.g. `pipx ensurepath` followed by `source ~/.bashrc`).

@@ -26,7 +26,7 @@ class DemoEngine:
         return {}
 
     def run(self, scenario_name: str | None = None) -> ResultSet:
-        """Run the simulated seminar demonstration."""
+        """Run the simulated seminar demonstration with rich SMB metadata output."""
         banner_text = Text()
         banner_text.append("╭────────────────────────────────────────────────────────────╮\n", style="bold yellow")
         banner_text.append("│               ", style="bold yellow")
@@ -60,21 +60,28 @@ class DemoEngine:
             proto = item.get("protocol", "smb")
             msg = item.get("message", "Simulated response")
             shares = item.get("shares", [])
+            duration = float(item.get("duration", 0.03))
 
             data = {
                 "hostname": item.get("hostname"),
                 "os": item.get("os"),
-                "smb_version": item.get("smb_version"),
-                "signing_required": item.get("signing", False),
+                "build": item.get("build"),
+                "architecture": item.get("architecture", "x64"),
+                "domain": item.get("domain", scenario.get("domain", "CORP.LOCAL")),
+                "smb_dialect": item.get("smb_dialect", item.get("smb_version", "SMB2")),
+                "smb_version": item.get("smb_version", "SMB2"),
+                "signing": item.get("signing", True),
+                "signing_required": item.get("signing", True),
+                "smbv1": item.get("smbv1", False),
                 "shares": shares,
             }
 
             res = Result(
-                target=f"{ip}:{port}",
+                target=f"{ip}:{port}" if port != 445 else ip,
                 port=port,
                 protocol=proto,
                 status=status,
-                duration=0.03,
+                duration=duration,
                 message=msg,
                 data=data,
             )
@@ -82,5 +89,6 @@ class DemoEngine:
             self.console.print_result_line(res)
 
         self.console.print_summary(result_set)
+        self.console.console.print("[dim]Demo mode — no network traffic was generated.[/dim]\n")
         self.console.print_success("Safe demonstration completed successfully. Zero packets transmitted.")
         return result_set

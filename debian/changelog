@@ -1,0 +1,9 @@
+crackmapexec-plus (0.1.0-1) unstable; urgency=medium
+
+  * Initial Debian/Kali release for CrackMapExec+.
+  * Provides crackmapexec+ and cme+ global CLI entry points.
+  * Adds rich SMB host metadata inspection with NTLMSSP challenge analysis.
+  * Adds Video Guide Center with timestamp calculations.
+  * Adds offline safe Demo Simulator and doctor diagnostic tool.
+
+ -- CodingM-eng <codingm-eng@users.noreply.github.com>  Thu, 27 Aug 2026 20:00:00 +0000
