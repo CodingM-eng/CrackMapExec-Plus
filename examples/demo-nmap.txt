@@ -1,0 +1,31 @@
+# Nmap 7.94 scan initiated Fri Aug 28 12:00:00 2026 as: nmap -sC -sV -p- -Pn -oN demo-nmap.txt 10.10.10.10 10.10.10.20 10.10.10.30
+Nmap scan report for LAB-DC.lab.enterprise.thm (10.10.10.10)
+Host is up (0.0021s latency).
+Not shown: 65531 closed tcp ports (reset)
+PORT    STATE SERVICE      VERSION
+88/tcp  open  kerberos-sec Microsoft Windows Kerberos (server time: 2026-08-28 12:00:00Z)
+389/tcp open  ldap         Microsoft Windows Active Directory LDAP (Domain: lab.enterprise.thm0., Site: Default-First-Site-Name)
+445/tcp open  microsoft-ds Windows Server 2019 Standard 17763 microsoft-ds (workgroup: LAB)
+636/tcp open  ssl/ldap     Microsoft Windows Active Directory LDAP (Domain: lab.enterprise.thm0., Site: Default-First-Site-Name)
+Service Info: Host: LAB-DC; OS: Windows; CPE: cpe:/o:microsoft:windows
+
+Nmap scan report for MGMT-WS01.lab.enterprise.thm (10.10.10.20)
+Host is up (0.0018s latency).
+Not shown: 65532 closed tcp ports (reset)
+PORT     STATE SERVICE VERSION
+135/tcp  open  msrpc   Microsoft Windows RPC
+445/tcp  open  microsoft-ds Windows 11 Pro 22631 microsoft-ds
+5985/tcp open  wsman   Microsoft HTTPAPI httpd 2.0 (SSDP/UPnP)
+Service Info: Host: MGMT-WS01; OS: Windows; CPE: cpe:/o:microsoft:windows
+
+Nmap scan report for LINUX-GW01.lab.enterprise.thm (10.10.10.30)
+Host is up (0.0015s latency).
+Not shown: 65531 closed tcp ports (reset)
+PORT     STATE SERVICE  VERSION
+22/tcp   open  ssh      OpenSSH 9.2p1 (Ubuntu Linux; protocol 2.0)
+80/tcp   open  http     Apache httpd 2.4.62 ((Debian))
+3306/tcp open  mysql    MariaDB 10.3.23 (unauthenticated)
+5038/tcp open  asterisk Asterisk Call Manager 2.10.6
+Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+# Nmap done at Fri Aug 28 12:02:15 2026 -- 3 IP addresses (3 hosts up) scanned in 135.20 seconds

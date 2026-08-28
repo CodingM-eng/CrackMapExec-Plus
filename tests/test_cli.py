@@ -1,6 +1,7 @@
 """Unit tests for CLI parsing, help systems, and command dispatching."""
 
 import json
+from unittest.mock import patch
 
 from cmeplus.cli.parser import parse_and_execute
 
@@ -273,3 +274,36 @@ def test_cli_multi_protocol_chaining(capsys):
     captured = capsys.readouterr()
     assert "192.168.1.10" in captured.out
     assert "192.168.1.20" in captured.out
+
+
+def test_cli_nmap_demo_mode(capsys):
+    ret = parse_and_execute(["--nmap", "examples/demo-nmap.txt", "--demo"])
+    assert ret == 0
+    captured = capsys.readouterr()
+    assert "Target Intelligence" in captured.out
+    assert "CrackMapExec+ Nmap Intelligence" in captured.out
+    assert "Safe demonstration completed successfully" in captured.out
+
+
+def test_cli_nmap_short_alias_demo(capsys):
+    ret = parse_and_execute(["--n", "examples/demo-nmap.txt", "--demo"])
+    assert ret == 0
+    captured = capsys.readouterr()
+    assert "Target Intelligence" in captured.out
+
+
+def test_cli_nmap_analyze_mode_no_network(capsys):
+    with patch("rich.prompt.Confirm.ask", return_value=False):
+        ret = parse_and_execute(["analyze", "examples/demo-nmap.txt"])
+        assert ret == 0
+        captured = capsys.readouterr()
+        assert "Target Intelligence" in captured.out
+        assert "Execution cancelled by user" in captured.out
+
+
+def test_cli_nmap_help(capsys):
+    ret = parse_and_execute(["--nmap", "--help"])
+    assert ret == 0
+    captured = capsys.readouterr()
+    assert "CrackMapExec+ Nmap Intelligence Engine" in captured.out
+

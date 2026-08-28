@@ -220,16 +220,18 @@ def handle_command_help(command: str, console: OutputConsole) -> None:
         content.append("Description:\n", style="bold cyan")
         content.append("  Inspects published releases on the official GitHub repository (CodingM-eng/CrackMapExec-Plus).\n\n", style="white")
 
-    elif cmd == "bugs":
-        content.append("CrackMapExec+ Automated Bug Tracker\n\n", style="bold white")
+    elif cmd in ("nmap", "analyze"):
+        content.append("CrackMapExec+ Nmap Intelligence Engine\n\n", style="bold white")
         content.append("Usage:\n", style="bold cyan")
-        content.append("  crackmapexec+ bugs                   List tracked open bug reports\n", style="bold yellow")
-        content.append("  crackmapexec+ bugs --report          Display full markdown bug details\n", style="bold yellow")
-        content.append("  crackmapexec+ bugs --all             List all bugs including resolved\n", style="bold yellow")
-        content.append("  crackmapexec+ bugs sync              Synchronize sanitized bugs to GitHub\n\n", style="bold yellow")
+        content.append("  crackmapexec+ --nmap <nmap.txt>      Analyze Nmap -oN output and build execution plan\n", style="bold yellow")
+        content.append("  crackmapexec+ --n <nmap.txt>         Short alias for --nmap\n", style="bold yellow")
+        content.append("  crackmapexec+ analyze <nmap.txt>     Analyze file and preview plan (no network actions)\n", style="bold yellow")
+        content.append("  crackmapexec+ analyze <nmap.txt> --run Execute planned probes after confirmation\n", style="bold yellow")
+        content.append("  crackmapexec+ --nmap <nmap.txt> --host <ip> Target a specific host from multi-host report\n", style="bold yellow")
+        content.append("  crackmapexec+ --nmap <nmap.txt> --report Generate assessment report bundle (JSON/HTML)\n\n", style="bold yellow")
         content.append("Description:\n", style="bold cyan")
-        content.append("  Structured local bug tracking registry (bugs/index.json and bugs/BUG-XXXX.md)\n", style="white")
-        content.append("  with automated deduplication, sanitization, and regression tracking.\n\n", style="white")
+        content.append("  Parses standard Nmap human-readable output (-oN), extracts discovered services and banners,\n", style="white")
+        content.append("  resolves supported protocol workflows (SMB, LDAP, WinRM, SSH), and coordinates plan execution.\n\n", style="white")
 
     else:
         content.append(f"CrackMapExec+ Command: {cmd}\n\n", style="bold white")
@@ -551,3 +553,88 @@ def handle_batch_project(yaml_path_str: str, console: OutputConsole, engine: Eng
         engine.run_plan(plan)
     else:
         console.print_info("Batch execution aborted.")
+
+
+def handle_nmap(args: list[str], console: OutputConsole, is_demo: bool = False) -> int:
+    """Handle `--nmap` and `--n` Nmap intelligence ingestion."""
+    from cmeplus.nmap.engine import NmapEngine
+
+    if "--help" in args or "-h" in args:
+        handle_command_help("nmap", console)
+        return 0
+
+    if not args:
+        console.print_failure("Missing Nmap output file path (e.g. 'crackmapexec+ --nmap scan.txt').")
+        console.print_info("Run 'crackmapexec+ --nmap --help' for options.")
+        return 1
+
+    # Parse flags
+    generate_report = "--report" in args
+    clean_args = [a for a in args if a not in ("--report", "--demo")]
+
+    host_filter = None
+    if "--host" in clean_args:
+        idx = clean_args.index("--host")
+        if idx + 1 < len(clean_args):
+            host_filter = clean_args[idx + 1]
+            clean_args = clean_args[:idx] + clean_args[idx + 2 :]
+        else:
+            console.print_failure("Missing argument for --host <ip-or-hostname>.")
+            return 1
+
+    file_path = clean_args[0] if clean_args else ""
+    if not file_path:
+        console.print_failure("Missing Nmap output file path.")
+        return 1
+
+    nmap_engine = NmapEngine(console=console)
+    return nmap_engine.analyze(
+        file_path=file_path,
+        run=False,
+        host_filter=host_filter,
+        generate_report=generate_report,
+        is_demo=is_demo,
+    )
+
+
+def handle_analyze(args: list[str], console: OutputConsole, is_demo: bool = False) -> int:
+    """Handle `analyze <nmap.txt>` command and flags."""
+    from cmeplus.nmap.engine import NmapEngine
+
+    if "--help" in args or "-h" in args:
+        handle_command_help("analyze", console)
+        return 0
+
+    if not args:
+        console.print_failure("Usage: crackmapexec+ analyze <nmap.txt> [--run] [--host <target>] [--report]")
+        console.print_info("Run 'crackmapexec+ analyze --help' for details.")
+        return 1
+
+    run = "--run" in args
+    generate_report = "--report" in args
+    clean_args = [a for a in args if a not in ("--run", "--report", "--demo")]
+
+    host_filter = None
+    if "--host" in clean_args:
+        idx = clean_args.index("--host")
+        if idx + 1 < len(clean_args):
+            host_filter = clean_args[idx + 1]
+            clean_args = clean_args[:idx] + clean_args[idx + 2 :]
+        else:
+            console.print_failure("Missing argument for --host <ip-or-hostname>.")
+            return 1
+
+    file_path = clean_args[0] if clean_args else ""
+    if not file_path:
+        console.print_failure("Missing Nmap output file path.")
+        return 1
+
+    nmap_engine = NmapEngine(console=console)
+    return nmap_engine.analyze(
+        file_path=file_path,
+        run=run,
+        host_filter=host_filter,
+        generate_report=generate_report,
+        is_demo=is_demo,
+    )
+

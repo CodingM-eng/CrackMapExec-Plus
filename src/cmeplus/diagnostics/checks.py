@@ -459,6 +459,58 @@ def check_core_engines() -> list[DiagnosticCheck]:
             )
         )
 
+    # Nmap Intelligence Engine
+    t0 = time.perf_counter()
+    try:
+        from cmeplus.nmap.parsers.normal import NormalParser
+        from cmeplus.nmap.resolver import ProtocolResolver
+
+        parser = NormalParser()
+        sample = (
+            "Nmap scan report for host1 (10.10.10.10)\n"
+            "PORT   STATE SERVICE VERSION\n"
+            "22/tcp open  ssh     OpenSSH 9.2p1\n"
+        )
+        rep = parser.parse_text(sample)
+        plan = ProtocolResolver.build_execution_plan(rep)
+        if rep.total_hosts == 1 and plan.total_planned_jobs == 1:
+            checks.append(
+                DiagnosticCheck(
+                    check_id="core_nmap",
+                    category="Core",
+                    name="Nmap Intelligence Engine",
+                    component="nmap",
+                    status=CheckStatus.PASS,
+                    message="Nmap -oN parser and protocol resolver operational",
+                    duration=time.perf_counter() - t0,
+                )
+            )
+        else:
+            checks.append(
+                DiagnosticCheck(
+                    check_id="core_nmap",
+                    category="Core",
+                    name="Nmap Intelligence Engine",
+                    component="nmap",
+                    status=CheckStatus.FAIL,
+                    message="Nmap parser or protocol resolver returned unexpected result",
+                    duration=time.perf_counter() - t0,
+                )
+            )
+    except Exception as exc:
+        checks.append(
+            DiagnosticCheck(
+                check_id="core_nmap",
+                category="Core",
+                name="Nmap Intelligence Engine",
+                component="nmap",
+                status=CheckStatus.FAIL,
+                message=f"Nmap engine diagnostic check failed: {exc}",
+                exception=exc,
+                duration=time.perf_counter() - t0,
+            )
+        )
+
     return checks
 
 

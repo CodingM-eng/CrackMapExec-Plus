@@ -230,24 +230,69 @@ crackmapexec+ --video ssh
 
 # Search video catalog by keyword
 crackmapexec+ --video search "active directory"
+### 2. Nmap Intelligence Engine (`--nmap` / `--n`)
 
-# List all available catalog topics and timestamps
-crackmapexec+ --video list
+Bridge port reconnaissance with protocol interrogation in a single workflow:
+
+```bash
+# Scan target with Nmap
+nmap -sC -sV -p- -Pn -oN nmap.txt 10.10.10.10
+
+# Analyze and inspect with CrackMapExec+
+crackmapexec+ --nmap nmap.txt
+# or short alias:
+crackmapexec+ --n nmap.txt
 ```
 
-### 5. Interactive Wizard
+```text
+Nmap
+  ↓
+nmap.txt
+  ↓
+CrackMapExec+ Nmap Intelligence
+  ↓
+Service inventory
+  ↓
+Protocol mapping
+  ↓
+Execution plan
+  ↓
+Confirmation [y/N]
+  ↓
+SMB / LDAP / SSH / WinRM
+  ↓
+Unified Results
+  ↓
+JSON / HTML
+```
+
+* Run analysis without network actions: `crackmapexec+ analyze nmap.txt`
+* Execute with pre-confirmation: `crackmapexec+ analyze nmap.txt --run`
+* Filter to a single host: `crackmapexec+ --nmap nmap.txt --host 10.10.10.10`
+* Generate report bundle: `crackmapexec+ --nmap nmap.txt --report`
+* Safe offline demo: `crackmapexec+ --nmap examples/demo-nmap.txt --demo`
+
+### 3. Multi-Protocol Job Chaining
+
+Execute multiple protocol targets in a single pipeline:
+
+```bash
+crackmapexec+ smb 10.10.10.10 ldap 10.10.10.10 winrm 10.10.10.20 ssh 10.10.10.30
+```
+
+### 4. Interactive Guided Wizard
 
 ```bash
 crackmapexec+ wizard
 ```
 
-### 6. Safe Seminar Demo Simulation
+### 5. Safe Seminar Demo Simulation
 
 ```bash
 crackmapexec+ --demo
 ```
 
-### 7. HTML & JSON Reporting
+### 6. HTML & JSON Reporting
 
 ```bash
 crackmapexec+ smb 192.168.1.0/24 --report
@@ -270,6 +315,8 @@ ruff check src/ tests/
 ## 📚 Documentation Reference
 
 * [Architecture & Design](docs/architecture.md)
+* [Upstream Architectural Analysis](docs/upstream-analysis.md)
+* [Nmap Intelligence Engine Guide](docs/nmap.md)
 * [Installation Guide](docs/installation.md)
 * [Update Engine Guide](docs/update.md)
 * [Diagnostics & Smoke Testing](docs/diagnostics.md)

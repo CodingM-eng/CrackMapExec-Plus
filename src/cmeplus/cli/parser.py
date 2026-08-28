@@ -16,6 +16,7 @@ if sys.platform == "win32":
 from cmeplus import __version__
 from cmeplus.cli.commands import (
     handle_about,
+    handle_analyze,
     handle_batch_project,
     handle_bugs,
     handle_command_help,
@@ -23,6 +24,7 @@ from cmeplus.cli.commands import (
     handle_dev_doctor,
     handle_explain,
     handle_history,
+    handle_nmap,
     handle_protocol_help,
     handle_releases,
     handle_update,
@@ -40,6 +42,7 @@ from cmeplus.core.targets import TargetEngine
 from cmeplus.output.console import OutputConsole
 from cmeplus.output.json import format_json_results
 from cmeplus.output.tables import TableRenderer
+from cmeplus.protocols.registry import ProtocolRegistry
 
 
 def print_categorized_help(console: Console) -> None:
@@ -59,7 +62,8 @@ def print_categorized_help(console: Console) -> None:
 
     menu = Text()
     menu.append("Usage:\n", style="bold cyan")
-    menu.append("  crackmapexec+ <protocol> <target> [options]\n\n", style="bold yellow")
+    menu.append("  crackmapexec+ <protocol> <target> [options]\n", style="bold yellow")
+    menu.append("  crackmapexec+ --nmap <nmap.txt> [options]\n\n", style="bold yellow")
 
     menu.append("Protocols:\n", style="bold cyan")
     menu.append("  smb       SMB workflow & dialect negotiation\n", style="white")
@@ -67,29 +71,32 @@ def print_categorized_help(console: Console) -> None:
     menu.append("  winrm     WinRM workflow & WS-Man administration\n", style="white")
     menu.append("  ssh       SSH workflow & secure shell exploration\n\n", style="white")
 
+    menu.append("Analysis & Reconnaissance:\n", style="bold cyan")
+    menu.append("  --nmap    Analyze Nmap -oN output and map services (--nmap <file>)\n", style="white")
+    menu.append("  --n       Short alias for --nmap\n", style="white")
+    menu.append("  analyze   Build analysis and execution plan without network actions\n\n", style="white")
+
     menu.append("Workflow & Assessment:\n", style="bold cyan")
     menu.append("  wizard    Interactive command builder\n", style="white")
     menu.append("  history   Execution history (metadata only)\n", style="white")
     menu.append("  batch     Run a saved multi-job project\n\n", style="white")
 
-    menu.append("System, Diagnostics & Bugs:\n", style="bold cyan")
+    menu.append("System, Diagnostics & Maintenance:\n", style="bold cyan")
     menu.append("  update    Update engine & diagnostic check (update --check, update --to)\n", style="white")
     menu.append("  releases  Official GitHub releases & version history (releases <ver>)\n", style="white")
     menu.append("  bugs      Automated bug tracker (bugs --report, bugs sync)\n", style="white")
     menu.append("  doctor    Environment & PATH installation health check\n\n", style="white")
 
-    menu.append("Learning:\n", style="bold cyan")
+    menu.append("Learning & Education:\n", style="bold cyan")
     menu.append("  --video   Video Guide Center (e.g. --video smb, --video list)\n", style="white")
     menu.append("  --v       Short alias for --video\n", style="white")
     menu.append("  --explain In-depth educational protocol explanation\n\n", style="white")
 
-    menu.append("Output & Options:\n", style="bold cyan")
+    menu.append("Output & Demonstration:\n", style="bold cyan")
+    menu.append("  --demo    Safe 100% offline seminar demonstration\n", style="white")
     menu.append("  --verbose Detailed multi-stage connection diagnostics\n", style="white")
     menu.append("  --report  Generate HTML dashboard and JSON report bundle\n", style="white")
     menu.append("  --format  Select output format: console (default), json, quiet\n\n", style="white")
-
-    menu.append("Demo:\n", style="bold cyan")
-    menu.append("  --demo    Safe 100% offline seminar demonstration\n\n", style="white")
 
     menu.append("General:\n", style="bold cyan")
     menu.append("  --version Show version\n", style="white")
@@ -107,7 +114,7 @@ def parse_and_execute(argv: list[str] | None = None) -> int:
 
     app_config = ConfigLoader.load()
     console_out = OutputConsole()
-    known_protocols = ["smb", "ldap", "winrm", "ssh", "mock"]
+    known_protocols = ProtocolRegistry.get_supported_names()
 
     # 1. Handle bare invocation -> Help
     if not argv:
@@ -121,7 +128,21 @@ def parse_and_execute(argv: list[str] | None = None) -> int:
         print_categorized_help(console_out.console)
         return 0
 
-    # 3. Check for --video or --v (Video Guide Center)
+    # 3. Check for --nmap or --n (Nmap Intelligence Engine)
+    if "--nmap" in argv or "--n" in argv:
+        flag = "--nmap" if "--nmap" in argv else "--n"
+        idx = argv.index(flag)
+        nmap_args = argv[:idx] + argv[idx + 1 :]
+        is_demo = "--demo" in argv
+        clean_nmap_args = [a for a in nmap_args if a != "--demo"]
+        return handle_nmap(clean_nmap_args, console_out, is_demo=is_demo)
+
+    if first_arg == "analyze":
+        is_demo = "--demo" in argv
+        clean_analyze_args = [a for a in argv[1:] if a != "--demo"]
+        return handle_analyze(clean_analyze_args, console_out, is_demo=is_demo)
+
+    # 4. Check for --video or --v (Video Guide Center)
     if "--video" in argv or "--v" in argv:
         flag = "--video" if "--video" in argv else "--v"
         idx = argv.index(flag)
@@ -134,7 +155,7 @@ def parse_and_execute(argv: list[str] | None = None) -> int:
         handle_video_command(v_args, console_out)
         return 0
 
-    # 4. Check for top-level non-protocol commands / flags
+    # 5. Check for top-level non-protocol commands / flags
     if "--version" in argv or argv == ["-version"]:
         handle_version(console_out)
         return 0

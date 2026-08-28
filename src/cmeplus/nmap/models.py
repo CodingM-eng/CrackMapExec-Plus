@@ -1,0 +1,179 @@
+"""Nmap Data Models: Structured representations of Nmap scan reports, hosts, services, and execution plans."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from cmeplus.core.jobs import Job
+
+
+@dataclass
+class NmapService:
+    """Discovered network port and service banner metadata from an Nmap scan."""
+
+    port: int
+    protocol: str = "tcp"  # tcp, udp
+    state: str = "open"  # open, filtered, closed
+    service: str = ""  # e.g. ssh, http, microsoft-ds, ldap, wsman, mysql, asterisk
+    product: str = ""  # e.g. OpenSSH, Apache, MariaDB
+    version: str = ""  # e.g. 9.2p1, 2.4.62, 10.3.23
+    extrainfo: str = ""  # e.g. (Ubuntu Linux; protocol 2.0)
+    raw_line: str = ""
+
+    @property
+    def display_version(self) -> str:
+        """Combine product, version, and extra info into a clean single string."""
+        parts = [self.product, self.version]
+        if self.extrainfo:
+            parts.append(f"({self.extrainfo})")
+        full = " ".join(p.strip() for p in parts if p.strip())
+        return full or self.version or self.product or "—"
+
+    @property
+    def is_open(self) -> bool:
+        return self.state.lower() == "open"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "port": self.port,
+            "protocol": self.protocol,
+            "state": self.state,
+            "service": self.service,
+            "product": self.product,
+            "version": self.version,
+            "extrainfo": self.extrainfo,
+            "display_version": self.display_version,
+        }
+
+
+@dataclass
+class NmapHost:
+    """Discovered host details, address, DNS names, and service inventory."""
+
+    ip: str
+    hostname: str = ""
+    status: str = "up"
+    os_hints: list[str] = field(default_factory=list)
+    services: list[NmapService] = field(default_factory=list)
+
+    @property
+    def display_name(self) -> str:
+        if self.hostname and self.hostname != self.ip:
+            return f"{self.hostname} ({self.ip})"
+        return self.ip
+
+    @property
+    def open_services(self) -> list[NmapService]:
+        return [s for s in self.services if s.is_open]
+
+    @property
+    def os_summary(self) -> str:
+        if self.os_hints:
+            return ", ".join(self.os_hints[:2])
+        return "Unknown"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "ip": self.ip,
+            "hostname": self.hostname,
+            "status": self.status,
+            "os_hints": self.os_hints,
+            "services": [s.to_dict() for s in self.services],
+        }
+
+
+@dataclass
+class NmapReport:
+    """Complete parsed Nmap scan report containing one or more target hosts."""
+
+    scanner: str = "nmap"
+    args: str = ""
+    start_time: str = ""
+    hosts: list[NmapHost] = field(default_factory=list)
+    raw_text: str = ""
+    source_file: str = ""
+
+    @property
+    def total_hosts(self) -> int:
+        return len(self.hosts)
+
+    @property
+    def total_services(self) -> int:
+        return sum(len(h.services) for h in self.hosts)
+
+    @property
+    def total_open_services(self) -> int:
+        return sum(len(h.open_services) for h in self.hosts)
+
+    def find_host(self, target_str: str) -> NmapHost | None:
+        """Find host matching IP or hostname."""
+        clean = target_str.strip().lower()
+        for h in self.hosts:
+            if h.ip.lower() == clean or h.hostname.lower() == clean:
+                return h
+        return None
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "scanner": self.scanner,
+            "args": self.args,
+            "start_time": self.start_time,
+            "source_file": self.source_file,
+            "total_hosts": self.total_hosts,
+            "total_open_services": self.total_open_services,
+            "hosts": [h.to_dict() for h in self.hosts],
+        }
+
+
+@dataclass
+class ServiceMapping:
+    """Assessment mapping of a discovered Nmap service to a CrackMapExec+ protocol adapter."""
+
+    service: NmapService
+    host: NmapHost
+    target_protocol: str | None  # e.g. 'smb', 'ldap', 'winrm', 'ssh', or None
+    is_supported: bool
+    status_badge: str  # '✓', '⚠', '✗'
+    reason: str  # e.g. 'Native SMB driver', 'HTTP adapter available', 'Adapter not implemented'
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "host": self.host.ip,
+            "hostname": self.host.hostname,
+            "port": self.service.port,
+            "service": self.service.service,
+            "product": self.service.display_version,
+            "target_protocol": self.target_protocol,
+            "is_supported": self.is_supported,
+            "status_badge": self.status_badge,
+            "reason": self.reason,
+        }
+
+
+@dataclass
+class ExecutionPlan:
+    """Execution plan generated by the ProtocolResolver from an Nmap report."""
+
+    report: NmapReport
+    mappings: list[ServiceMapping] = field(default_factory=list)
+    supported_jobs: list[Job] = field(default_factory=list)
+    unsupported_services: list[ServiceMapping] = field(default_factory=list)
+
+    @property
+    def total_planned_jobs(self) -> int:
+        return len(self.supported_jobs)
+
+    @property
+    def has_runnable_jobs(self) -> bool:
+        return len(self.supported_jobs) > 0
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "source_file": self.report.source_file,
+            "total_hosts": self.report.total_hosts,
+            "total_planned_jobs": self.total_planned_jobs,
+            "mappings": [m.to_dict() for m in self.mappings],
+            "unsupported_count": len(self.unsupported_services),
+        }
