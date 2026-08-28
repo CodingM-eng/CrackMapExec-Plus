@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from cmeplus.core.results import Result, ResultState
 from cmeplus.transport.states import ProtocolState, TransportState
 
 
@@ -181,3 +182,142 @@ class SSHMetadata(ServiceMetadata):
             }
         )
         return d
+
+
+@dataclass
+class ConnectionResult:
+    """Universal structured result returned by all protocol drivers and transport stages."""
+
+    target: str
+    port: int
+    protocol: str
+    transport: str = "tcp"
+    tcp_state: TransportState = TransportState.TCP_OPEN
+    protocol_state: ProtocolState = ProtocolState.PROTOCOL_REACHABLE
+    session_state: str = ""
+    authentication_state: str = ""
+    duration: float = 0.0
+    error_type: str | None = None
+    error_message: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    @property
+    def is_reachable(self) -> bool:
+        return self.tcp_state == TransportState.TCP_OPEN and self.protocol_state in (
+            ProtocolState.PROTOCOL_REACHABLE,
+            ProtocolState.AUTH_REQUIRED,
+            ProtocolState.AUTH_SUCCESS,
+            ProtocolState.READY,
+        )
+
+    @property
+    def is_success(self) -> bool:
+        return self.is_reachable and self.protocol_state in (
+            ProtocolState.PROTOCOL_REACHABLE,
+            ProtocolState.AUTH_SUCCESS,
+            ProtocolState.READY,
+        )
+
+    @property
+    def is_auth_required(self) -> bool:
+        return self.protocol_state == ProtocolState.AUTH_REQUIRED
+
+    @property
+    def hostname(self) -> str:
+        return self.metadata.get("hostname", "")
+
+    @property
+    def domain(self) -> str:
+        return self.metadata.get("domain", "")
+
+    @property
+    def os_name(self) -> str:
+        return self.metadata.get("os_name", "") or self.metadata.get("os", "")
+
+    @property
+    def os_build(self) -> str:
+        return self.metadata.get("build", "")
+
+    @property
+    def architecture(self) -> str:
+        return self.metadata.get("architecture", "x64")
+
+    @property
+    def smb_dialect(self) -> str:
+        return self.metadata.get("smb_dialect", "")
+
+    @property
+    def smb_signing(self) -> bool:
+        return bool(self.metadata.get("signing_required", False) or self.metadata.get("signing", False))
+
+    @property
+    def smbv1(self) -> bool:
+        return bool(self.metadata.get("smbv1_enabled", False) or self.metadata.get("smbv1", False))
+
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize ConnectionResult to standard dictionary."""
+        d = dict(self.metadata)
+        d.update(
+            {
+                "target": self.target,
+                "port": self.port,
+                "protocol": self.protocol,
+                "transport": self.transport,
+                "tcp_state": self.tcp_state.value,
+                "protocol_state": self.protocol_state.value,
+                "session_state": self.session_state,
+                "authentication_state": self.authentication_state,
+                "duration": round(self.duration, 4),
+                "error_type": self.error_type,
+                "error_message": self.error_message,
+            }
+        )
+        if self.hostname:
+            d["hostname"] = self.hostname
+        if self.os_name:
+            d["os_name"] = self.os_name
+        if self.os_build:
+            d["os_build"] = self.os_build
+        if self.architecture:
+            d["architecture"] = self.architecture
+        if self.domain:
+            d["domain"] = self.domain
+        if self.smb_dialect:
+            d["smb_dialect"] = self.smb_dialect
+            d["smb_signing"] = self.smb_signing
+            d["smbv1"] = self.smbv1
+
+        return d
+
+    def to_result(self) -> Result:
+        """Convert to standard Result instance for downstream JobEngine / WorkerPool."""
+        if self.tcp_state == TransportState.TCP_REFUSED:
+            res_state = ResultState.UNAVAILABLE
+        elif self.tcp_state == TransportState.TCP_TIMEOUT or self.protocol_state == ProtocolState.TIMEOUT:
+            res_state = ResultState.TIMEOUT
+        elif self.tcp_state == TransportState.TCP_RESET:
+            res_state = ResultState.UNAVAILABLE
+        elif self.tcp_state == TransportState.TARGET_RESOLUTION_FAILED:
+            res_state = ResultState.ERROR
+        elif self.protocol_state in (ProtocolState.NEGOTIATION_FAILED, ProtocolState.PROTOCOL_NEGOTIATION_FAILED):
+            res_state = ResultState.NEGOTIATION_FAILED
+        elif self.protocol_state == ProtocolState.AUTH_REQUIRED:
+            res_state = ResultState.AUTH_REQUIRED
+        elif self.protocol_state in (ProtocolState.AUTH_SUCCESS, ProtocolState.PROTOCOL_REACHABLE, ProtocolState.READY):
+            res_state = ResultState.SUCCESS
+        elif self.protocol_state == ProtocolState.AUTH_FAILED:
+            res_state = ResultState.FAILED
+        else:
+            res_state = ResultState.ERROR
+
+        data_dict = self.to_dict()
+
+        return Result(
+            target=f"{self.target}:{self.port}" if self.port else self.target,
+            port=self.port,
+            protocol=self.protocol,
+            status=res_state,
+            duration=self.duration,
+            message=self.error_message or f"{self.protocol.upper()} {self.protocol_state.value}",
+            data=data_dict,
+        )

@@ -8,16 +8,11 @@ from cmeplus.bugs.manager import BugManager
 from cmeplus.diagnostics.engine import DiagnosticEngine
 from cmeplus.diagnostics.formatters import DiagnosticFormatter
 from cmeplus.output.console import OutputConsole
+from cmeplus.releases.service import ReleaseService
 from cmeplus.update.installer import InstallationMethod, detect_installation_method, execute_update
-from cmeplus.update.releases import (
-    fetch_github_releases,
-    get_release_by_version,
-    render_releases_list,
-)
 from cmeplus.update.version import (
-    check_version_status,
+    VersionInfo,
     get_installed_version,
-    is_downgrade,
 )
 
 
@@ -27,18 +22,28 @@ class UpdateEngine:
     def __init__(
         self,
         console: OutputConsole | None = None,
-        repo: str = "CodingM-eng/CrackMapExec-Plus",
+        release_service: ReleaseService | None = None,
     ) -> None:
         self.console = console or OutputConsole()
-        self.repo = repo
+        self.release_service = release_service or ReleaseService()
         self.diagnostic_engine = DiagnosticEngine()
         self.bug_manager = BugManager()
         self.formatter = DiagnosticFormatter(console=self.console.console)
 
-    def run_check(self) -> int:
+    def run_check(self, include_prerelease: bool = False) -> int:
         """Execute `crackmapexec+ update --check` non-destructive diagnostic and update check."""
-        # 1. Version Check against official GitHub Releases
-        v_info = check_version_status(repo=self.repo)
+        installed = get_installed_version()
+        up_status = self.release_service.check_update(installed, include_prerelease=include_prerelease)
+
+        v_info = VersionInfo(
+            installed=up_status.installed,
+            latest=up_status.latest,
+            is_update_available=up_status.is_update_available,
+            error=up_status.error,
+            release_url=up_status.release.html_url if up_status.release else None,
+            release_notes=up_status.release.body if up_status.release else None,
+            source=up_status.source,
+        )
 
         # 2. Run Diagnostics & Offline Smoke Tests
         report = self.diagnostic_engine.run_all()
@@ -62,6 +67,7 @@ class UpdateEngine:
         target_version: str | None = None,
         choose: bool = False,
         force: bool = False,
+        include_prerelease: bool = False,
     ) -> int:
         """Execute release-aware `crackmapexec+ update` workflow."""
         self.console.print_banner("Update & Maintenance")
@@ -71,7 +77,7 @@ class UpdateEngine:
 
         # Case 1: Interactive release chooser (`update --choose`)
         if choose:
-            releases, err = fetch_github_releases(repo=self.repo)
+            releases, err = self.release_service.list_releases(include_prerelease=include_prerelease)
             if not releases:
                 self.console.print_failure(f"Unable to fetch releases: {err or 'No releases found'}")
                 return 1
@@ -80,7 +86,7 @@ class UpdateEngine:
             for idx, r in enumerate(releases[:10], 1):
                 cur_marker = " (Installed)" if r.version == installed_ver else ""
                 latest_marker = " [Latest]" if idx == 1 else ""
-                self.console.console.print(f"  [bold green]{idx}[/bold green]) {r.tag_name:<10}{latest_marker}{cur_marker}")
+                self.console.console.print(f"  [bold green]{idx}[/bold green]) {r.tag:<10}{latest_marker}{cur_marker}")
             self.console.console.print()
 
             choice_str = Prompt.ask("Enter number", default="1")
@@ -97,14 +103,14 @@ class UpdateEngine:
 
         # Case 2: Target specific version (`update --to <version>`)
         if target_version:
-            rel, err = get_release_by_version(target_version, repo=self.repo)
+            rel, err = self.release_service.get_release_by_version(target_version, include_prerelease=True)
             if not rel:
                 self.console.print_failure(f"Release v{target_version.lstrip('vV')} was not found on official GitHub repository.")
                 self.console.console.print("\n[dim]Use 'crackmapexec+ releases' to view published releases.[/dim]\n")
                 return 1
 
             req_ver = rel.version
-            target_tag = rel.tag_name
+            target_tag = rel.tag
 
             if req_ver == installed_ver and not force:
                 self.console.console.print(f"\nYou are already running version [bold yellow]{installed_ver}[/bold yellow].")
@@ -112,17 +118,21 @@ class UpdateEngine:
                 return 0
 
             # Check if this is a downgrade
-            if is_downgrade(installed_ver, req_ver):
-                self.console.console.print(f"Current:   [bold yellow]{installed_ver}[/bold yellow]")
-                self.console.console.print(f"Requested: [bold cyan]{req_ver}[/bold cyan]\n")
-                self.console.console.print("[bold yellow]This is a downgrade.[/bold yellow]\n")
+            if self.release_service.is_downgrade(installed_ver, req_ver):
+                self.console.console.print("[bold yellow]You are about to downgrade CrackMapExec+.[/bold yellow]\n")
+                self.console.console.print("Current version:")
+                self.console.console.print(f"  [bold yellow]{installed_ver}[/bold yellow]\n")
+                self.console.console.print("Selected version:")
+                self.console.console.print(f"  [bold cyan]{req_ver}[/bold cyan]\n")
 
                 if not Confirm.ask("Continue?", default=False):
                     self.console.print_info("Downgrade cancelled by user.")
                     return 0
             else:
-                self.console.console.print(f"Current:   [bold yellow]{installed_ver}[/bold yellow]")
-                self.console.console.print(f"Target:    [bold green]{req_ver}[/bold green]\n")
+                self.console.console.print("Current version:")
+                self.console.console.print(f"  [bold yellow]{installed_ver}[/bold yellow]\n")
+                self.console.console.print("Target version:")
+                self.console.console.print(f"  [bold green]{req_ver}[/bold green]\n")
                 if not Confirm.ask(f"Update now to {target_tag}?", default=False):
                     self.console.print_info("Update cancelled by user.")
                     return 0
@@ -130,19 +140,19 @@ class UpdateEngine:
             return self._perform_install(method, target_tag, req_ver)
 
         # Case 3: Standard `crackmapexec+ update`
-        v_info = check_version_status(repo=self.repo)
+        up_status = self.release_service.check_update(installed_ver, include_prerelease=include_prerelease)
 
-        if v_info.error and not v_info.latest:
+        if up_status.error and not up_status.latest:
             self.console.console.print("[bold red]Unable to check GitHub releases.[/bold red]\n")
-            self.console.console.print(f"Reason:        [dim]{v_info.error}[/dim]")
+            self.console.console.print(f"Reason:        [dim]{up_status.error}[/dim]")
             self.console.console.print(f"Local version: [bold yellow]{installed_ver}[/bold yellow]\n")
             self.console.console.print("[dim]No update was performed.[/dim]\n")
             return 0
 
-        latest_ver = v_info.latest or installed_ver
+        latest_ver = up_status.latest or installed_ver
 
         # Check if already running latest version
-        if not v_info.is_update_available and not force:
+        if not up_status.is_update_available and not force:
             self.console.console.print(f"Installed version: [bold yellow]{installed_ver}[/bold yellow]")
             self.console.console.print(f"Latest version:    [bold green]{latest_ver}[/bold green]\n")
             self.console.console.print("[bold green]You are already running the latest version.[/bold green]")
@@ -170,38 +180,16 @@ class UpdateEngine:
     ) -> int:
         """Execute method-specific package installation."""
         if method in (InstallationMethod.DEBIAN, InstallationMethod.SYSTEM):
-            _, message = execute_update(method, repo=self.repo, target_tag=target_tag)
+            _, message = execute_update(method, repo=self.release_service.client.REPO, target_tag=target_tag)
             self.console.print_warning(message)
             return 1
 
         self.console.print_info(f"Installing {target_tag} via {method.value}...")
-        success, msg = execute_update(method, repo=self.repo, target_tag=target_tag)
+        success, msg = execute_update(method, repo=self.release_service.client.REPO, target_tag=target_tag)
 
         if not success:
             self.console.print_failure(f"Update failed: {msg}")
             return 1
 
-        self.console.print_success(f"Package successfully updated to {target_tag}.")
-
-        # Post-update verification
-        self.console.print_info("Running post-update health verification...")
-        report = self.diagnostic_engine.run_all()
-        new_installed_ver = get_installed_version()
-
-        self.console.console.print("\n╭─────────────── Update Completed ───────────────╮", style="bold green")
-        self.console.console.print(f"│  Previous Version:  {get_installed_version():<26} │")
-        self.console.console.print(f"│  Active Version:    {new_installed_ver:<26} │")
-        status_text = "HEALTHY" if report.is_healthy else "WARNINGS DETECTED"
-        self.console.console.print(f"│  Health Status:     {status_text:<26} │")
-        self.console.console.print("╰────────────────────────────────────────────────╯\n", style="bold green")
-
-        return 0 if report.is_healthy else 1
-
-    def list_releases(self) -> int:
-        """Execute `crackmapexec+ releases` command."""
-        releases, err = fetch_github_releases(repo=self.repo)
-        if err and not releases:
-            self.console.print_failure(f"Unable to fetch releases: {err}")
-            return 1
-        render_releases_list(self.console.console, releases, installed_version=get_installed_version())
+        self.console.print_success(f"Successfully updated CrackMapExec+ to {target_tag}!")
         return 0

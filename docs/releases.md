@@ -88,14 +88,22 @@ crackmapexec+ update --to 0.2.0
 
 If requesting an older version (downgrade):
 ```text
-Current:   0.2.0
-Requested: 0.1.0
+You are about to downgrade CrackMapExec+.
 
-This is a downgrade.
+Current version:
+0.2.0
+
+Selected version:
+0.1.0
 
 Continue? [y/N]
 ```
 The updater only proceeds after confirmation.
+
+### Including Pre-releases
+```bash
+crackmapexec+ releases --include-prerelease
+```
 
 ### Interactive Release Selection
 ```bash

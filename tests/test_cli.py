@@ -217,7 +217,28 @@ def test_cli_releases_command(capsys):
     assert ret == 0
     captured = capsys.readouterr()
     assert "CrackMapExec+ Releases" in captured.out
-    assert "Published Releases" in captured.out
+
+
+def test_cli_releases_specific_version(capsys):
+    from unittest.mock import patch
+
+    from cmeplus.releases.models import Release
+
+    mock_rel = Release(
+        tag="v0.1.0",
+        version="0.1.0",
+        name="CrackMapExec+ v0.1.0",
+        published_at="2026-08-27",
+        body="* Initial release",
+        html_url="https://github.com/CodingM-eng/CrackMapExec-Plus/releases/tag/v0.1.0",
+    )
+
+    with patch("cmeplus.releases.service.ReleaseService.get_release_by_version", return_value=(mock_rel, None)):
+        ret = parse_and_execute(["releases", "0.1.0"])
+        assert ret == 0
+        captured = capsys.readouterr()
+        assert "Release Details: v0.1.0" in captured.out
+        assert "Release Notes" in captured.out
 
 
 def test_cli_releases_help(capsys):

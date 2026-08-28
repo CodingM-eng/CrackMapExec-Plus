@@ -4,14 +4,19 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from cmeplus.update.installer import InstallationMethod, detect_installation_method
-from cmeplus.update.releases import ReleaseInfo, fetch_github_releases, get_release_by_version
+from cmeplus.releases import (
+    Release,
+    ReleaseService,
+    UpdateStatus,
+    normalize_version,
+    parse_semver,
+)
+from cmeplus.update.installer import InstallationMethod, detect_installation_method, execute_update
 from cmeplus.update.version import (
     VersionInfo,
     compare_versions,
     get_installed_version,
     is_downgrade,
-    parse_semver,
 )
 
 if TYPE_CHECKING:
@@ -27,15 +32,17 @@ def __getattr__(name: str):
 
 
 __all__ = [
-    "UpdateEngine",
     "InstallationMethod",
-    "detect_installation_method",
+    "Release",
+    "ReleaseService",
+    "UpdateEngine",
+    "UpdateStatus",
     "VersionInfo",
     "compare_versions",
-    "is_downgrade",
-    "parse_semver",
+    "detect_installation_method",
+    "execute_update",
     "get_installed_version",
-    "ReleaseInfo",
-    "fetch_github_releases",
-    "get_release_by_version",
+    "is_downgrade",
+    "normalize_version",
+    "parse_semver",
 ]

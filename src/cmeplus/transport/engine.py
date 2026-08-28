@@ -3,10 +3,49 @@
 from __future__ import annotations
 
 import socket
+import ssl
 import time
 from dataclasses import dataclass
 
-from cmeplus.transport.states import TransportState
+from cmeplus.transport.states import ProtocolState, TransportState
+
+
+class ConnectionErrorMapper:
+    """Centralized mapper converting raw network exceptions into structured lifecycle states."""
+
+    @staticmethod
+    def map_error(stage: str, exc: Exception) -> tuple[TransportState | ProtocolState, str]:
+        """Map exception to appropriate lifecycle state and clean error message."""
+        if isinstance(exc, socket.gaierror):
+            return TransportState.TARGET_RESOLUTION_FAILED, f"Target resolution failed: {exc}"
+
+        if isinstance(exc, ConnectionRefusedError):
+            return TransportState.TCP_REFUSED, "Connection refused by target host"
+
+        if isinstance(exc, (socket.timeout, TimeoutError)):
+            if stage == "tcp":
+                return TransportState.TCP_TIMEOUT, "TCP connection timed out"
+            return ProtocolState.TIMEOUT, f"Protocol timeout during {stage}"
+
+        if isinstance(exc, ConnectionResetError):
+            if stage == "tcp":
+                return TransportState.TCP_RESET, "Connection reset by peer during TCP handshake"
+            return ProtocolState.NEGOTIATION_FAILED, f"Connection reset by peer during {stage}"
+
+        if isinstance(exc, ssl.SSLError):
+            return ProtocolState.NEGOTIATION_FAILED, f"TLS negotiation failed: {exc}"
+
+        if isinstance(exc, OSError):
+            err_str = str(exc).lower()
+            if "unreachable" in err_str or "no route" in err_str:
+                return TransportState.TCP_UNREACHABLE, f"Host unreachable: {exc}"
+            if "refused" in err_str:
+                return TransportState.TCP_REFUSED, "Connection refused by target host"
+            if "reset" in err_str:
+                return ProtocolState.NEGOTIATION_FAILED, f"Connection reset during {stage}"
+            return TransportState.ERROR, f"OS network error during {stage}: {exc}"
+
+        return ProtocolState.ERROR, f"Error during {stage}: {exc}"
 
 
 @dataclass
@@ -65,91 +104,53 @@ class TransportEngine:
                     error=None,
                 )
 
-            except socket.timeout:
-                last_state = TransportState.TCP_TIMEOUT
-                last_error = f"Connection timed out after {timeout}s"
-                if sock:
-                    sock.close()
-            except ConnectionRefusedError:
-                last_state = TransportState.TCP_REFUSED
-                last_error = "Connection refused by target host"
-                if sock:
-                    sock.close()
-                break  # Do not retry on explicit refusal
-            except ConnectionResetError:
-                last_state = TransportState.TCP_RESET
-                last_error = "Connection reset by peer during TCP handshake"
-                if sock:
-                    sock.close()
-            except OSError as exc:
-                err_str = str(exc)
-                if "unreachable" in err_str.lower() or "no route" in err_str.lower():
-                    last_state = TransportState.TCP_UNREACHABLE
-                    last_error = f"Host unreachable: {err_str}"
-                else:
-                    last_state = TransportState.ERROR
-                    last_error = f"Socket error: {err_str}"
-                if sock:
-                    sock.close()
             except Exception as exc:
-                last_state = TransportState.ERROR
-                last_error = f"Unexpected connection failure: {exc}"
+                mapped_state, mapped_err = ConnectionErrorMapper.map_error("tcp", exc)
+                last_state = mapped_state if isinstance(mapped_state, TransportState) else TransportState.ERROR
+                last_error = mapped_err
                 if sock:
-                    sock.close()
+                    try:
+                        sock.close()
+                    except Exception:
+                        pass
+
+                if last_state == TransportState.TCP_REFUSED:
+                    break  # Do not retry on explicit refusal
 
             if attempt < retries - 1:
-                time.sleep(0.05 * (attempt + 1))
+                time.sleep(0.05)
 
-        latency = time.perf_counter() - start_t
         return TCPProbeResult(
             sock=None,
             state=last_state,
-            latency=latency,
-            error=last_error,
+            latency=time.perf_counter() - start_t,
+            error=last_error or "TCP connection failed",
         )
 
     @staticmethod
-    def safe_recv(
-        sock: socket.socket,
-        max_bytes: int = 4096,
-        timeout: float = 5.0,
-    ) -> tuple[bytes, str | None]:
-        """Safely read bytes from socket with timeout and exception containment.
-
-        Returns:
-            (received_bytes, error_message_if_failed)
-        """
-        try:
-            sock.settimeout(timeout)
-            data = sock.recv(max_bytes)
-            if not data:
-                return b"", "Connection closed by remote peer (0 bytes received)"
-            return data, None
-        except socket.timeout:
-            return b"", f"Socket receive timed out after {timeout}s"
-        except ConnectionResetError:
-            return b"", "Connection reset by peer during receive"
-        except Exception as exc:
-            return b"", f"Socket receive error: {exc}"
-
-    @staticmethod
-    def safe_send(
-        sock: socket.socket,
-        data: bytes,
-        timeout: float = 5.0,
-    ) -> tuple[bool, str | None]:
-        """Safely transmit bytes over socket.
-
-        Returns:
-            (success_bool, error_message_if_failed)
-        """
+    def safe_send(sock: socket.socket, data: bytes, timeout: float = 5.0) -> tuple[bool, str | None]:
+        """Safely send bytes over an open socket with timeout enforcement."""
+        if not sock:
+            return False, "Socket is closed or uninitialized"
         try:
             sock.settimeout(timeout)
             sock.sendall(data)
             return True, None
-        except socket.timeout:
-            return False, f"Socket send timed out after {timeout}s"
-        except ConnectionResetError:
-            return False, "Connection reset by peer during send"
         except Exception as exc:
-            return False, f"Socket send error: {exc}"
+            _, err_msg = ConnectionErrorMapper.map_error("send", exc)
+            return False, err_msg
+
+    @staticmethod
+    def safe_recv(sock: socket.socket, max_bytes: int = 4096, timeout: float = 5.0) -> tuple[bytes, str | None]:
+        """Safely receive bytes from an open socket with timeout and EOF detection."""
+        if not sock:
+            return b"", "Socket is closed or uninitialized"
+        try:
+            sock.settimeout(timeout)
+            data = sock.recv(max_bytes)
+            if not data:
+                return b"", "Connection closed by remote host (EOF)"
+            return data, None
+        except Exception as exc:
+            _, err_msg = ConnectionErrorMapper.map_error("recv", exc)
+            return b"", err_msg

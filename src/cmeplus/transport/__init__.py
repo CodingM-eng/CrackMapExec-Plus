@@ -1,13 +1,12 @@
-"""Transport Module: Common network transport abstractions and state models."""
+"""Transport layer subsystem: TCP probing, lifecycle management, and states."""
 
-from __future__ import annotations
-
-from cmeplus.transport.engine import TCPProbeResult, TransportEngine
+from cmeplus.transport.engine import ConnectionErrorMapper, TCPProbeResult, TransportEngine
 from cmeplus.transport.states import ProtocolState, TransportState
 
 __all__ = [
-    "TransportEngine",
-    "TCPProbeResult",
-    "TransportState",
+    "ConnectionErrorMapper",
     "ProtocolState",
+    "TCPProbeResult",
+    "TransportEngine",
+    "TransportState",
 ]

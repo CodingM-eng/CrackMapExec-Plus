@@ -272,46 +272,50 @@ def handle_update(args: list[str], console: OutputConsole) -> int:
 
 def handle_releases(args: list[str], console: OutputConsole) -> int:
     """Handle `crackmapexec+ releases` commands."""
-    from cmeplus.update.releases import (
-        fetch_github_releases,
-        get_release_by_version,
-        open_release_in_browser,
-        render_release_detail,
-        render_releases_list,
-    )
+    from cmeplus import __version__
+    from cmeplus.releases.formatter import ReleaseFormatter
+    from cmeplus.releases.service import ReleaseService
 
     if "--help" in args or "-h" in args:
         handle_command_help("releases", console)
         return 0
 
-    if not args:
-        releases, err = fetch_github_releases()
-        if err and not releases:
-            console.print_failure(f"Unable to check GitHub releases: {err}")
-            return 1
-        render_releases_list(console.console, releases)
+    service = ReleaseService()
+    include_prerelease = "--include-prerelease" in args or "--prerelease" in args
+    clean_args = [a for a in args if a not in ("--include-prerelease", "--prerelease")]
+
+    if not clean_args:
+        releases, err = service.list_releases(include_prerelease=include_prerelease)
+        ReleaseFormatter.render_releases_list(
+            console=console.console,
+            releases=releases,
+            installed_version=__version__,
+            error=err,
+        )
         return 0
 
-    sub = args[0].strip()
+    sub = clean_args[0].strip()
 
     if sub == "open":
-        ver = args[1] if len(args) > 1 else __version__
-        rel, err = get_release_by_version(ver)
+        ver = clean_args[1] if len(clean_args) > 1 else __version__
+        rel, err = service.get_release_by_version(ver, include_prerelease=True)
         if not rel:
-            console.print_failure(f"Release '{ver}' not found: {err or 'Not found on GitHub'}")
+            console.print_failure(f"Release '{ver}' not found on official GitHub repository.")
             return 1
-        console.print_info(f"Opening GitHub release {rel.tag_name} in default browser...")
-        open_release_in_browser(rel)
-        return 0
+        return ReleaseFormatter.open_release_in_browser(console.console, rel)
 
-    # Specific version details
-    rel, err = get_release_by_version(sub)
+    # Specific version details (e.g. `releases 0.1.0` or `releases v0.1.0`)
+    rel, err = service.get_release_by_version(sub, include_prerelease=True)
     if not rel:
-        console.print_failure(f"Release '{sub}' not found.")
-        console.console.print("[dim]Run 'crackmapexec+ releases' to view published releases.[/dim]\n")
+        console.print_failure(f"Release '{sub}' not found on official GitHub repository.")
+        console.console.print("\n[dim]Run 'crackmapexec+ releases' to view published releases.[/dim]\n")
         return 1
 
-    render_release_detail(console.console, rel)
+    ReleaseFormatter.render_release_detail(
+        console=console.console,
+        release=rel,
+        installed_version=__version__,
+    )
     return 0
 
 

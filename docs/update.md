@@ -53,10 +53,13 @@ Update now? [y/N]
 crackmapexec+ update --to 0.1.0
 ```
 ```text
-Current:   0.2.0
-Requested: 0.1.0
+You are about to downgrade CrackMapExec+.
 
-This is a downgrade.
+Current version:
+0.2.0
+
+Selected version:
+0.1.0
 
 Continue? [y/N]
 ```
