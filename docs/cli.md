@@ -4,7 +4,7 @@ CrackMapExec+ provides a categorized, intuitive command-line interface designed 
 
 ---
 
-## 1. Top-Level Utility Flags
+## 1. Top-Level Utility Commands & Flags
 
 | Command / Flag | Description |
 | :--- | :--- |
@@ -18,7 +18,22 @@ CrackMapExec+ provides a categorized, intuitive command-line interface designed 
 
 ---
 
-## 2. Protocol Help & Options
+## 2. Maintenance, Diagnostics & Bug Tracking
+
+| Command | Description |
+| :--- | :--- |
+| `crackmapexec+ update --check` | Run diagnostic health checks and evaluate update availability (non-destructive) |
+| `crackmapexec+ update` | Interactively update the application to the latest release |
+| `crackmapexec+ doctor` | Environment, PATH, and configuration health check with actionable fixes |
+| `crackmapexec+ dev doctor` | Deep developer diagnostics (protocols, modules, git, tests, lint) |
+| `crackmapexec+ bugs` | List tracked open bug reports in a Rich table |
+| `crackmapexec+ bugs --report` | View detailed markdown bug reports |
+| `crackmapexec+ bugs --all` | List all tracked bugs (including resolved) |
+| `crackmapexec+ bugs sync` | Synchronize sanitized bug reports to GitHub repository |
+
+---
+
+## 3. Protocol Help & Options
 
 Each protocol provides dedicated `--help` screens:
 
@@ -50,13 +65,15 @@ crackmapexec+ <protocol> <target(s)> [options]
 * `--port <port>`: Override default service port
 * `-M, --module <name>`: Execute a post-enumeration module
 * `-L, --list-modules`: List available modules for the protocol
+* `--verbose`: Display detailed Tier-3 metadata (DNS FQDN, Forest, Capabilities, Server Time)
 * `--workers <N>`: Set concurrent worker threads (default: 4)
 * `--timeout <sec>`: Socket timeout (default: 5.0s)
+* `--format <fmt>`: Select format (`console`, `json`, `quiet`)
 * `--report`: Generate HTML dashboard and JSON assessment report bundles
 
 ---
 
-## 3. Target Syntax Examples
+## 4. Target Syntax Examples
 
 ```bash
 # Single IPv4 or IPv6
@@ -81,7 +98,7 @@ crackmapexec+ smb @hosts.txt
 
 ---
 
-## 4. Video Guide Center (`--video` / `--v`)
+## 5. Video Guide Center (`--video` / `--v`)
 
 ```bash
 # Interactive Video Center
@@ -108,7 +125,7 @@ crackmapexec+ --video list
 
 ---
 
-## 5. Workflows
+## 6. Workflows
 
 ### Interactive Wizard
 ```bash

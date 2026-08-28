@@ -27,27 +27,30 @@ class DemoEngine:
 
     def run(self, scenario_name: str | None = None) -> ResultSet:
         """Run the simulated seminar demonstration with rich SMB metadata output."""
-        banner_text = Text()
-        banner_text.append("╭────────────────────────────────────────────────────────────╮\n", style="bold yellow")
-        banner_text.append("│               ", style="bold yellow")
-        banner_text.append("CrackMapExec+ Safe Demo Mode", style="bold white")
-        banner_text.append("                 │\n", style="bold yellow")
-        banner_text.append("│   ", style="bold yellow")
-        banner_text.append("This is an offline simulation. No network targets contacted.   ", style="bold green")
-        banner_text.append("│\n", style="bold yellow")
-        banner_text.append("╰────────────────────────────────────────────────────────────╯", style="bold yellow")
-        self.console.console.print(banner_text)
-        self.console.console.print()
+        if not self.console.quiet:
+            banner_text = Text()
+            banner_text.append("╭────────────────────────────────────────────────────────────╮\n", style="bold yellow")
+            banner_text.append("│               ", style="bold yellow")
+            banner_text.append("CrackMapExec+ Safe Demo Mode", style="bold white")
+            banner_text.append("                 │\n", style="bold yellow")
+            banner_text.append("│   ", style="bold yellow")
+            banner_text.append("This is an offline simulation. No network targets contacted.   ", style="bold green")
+            banner_text.append("│\n", style="bold yellow")
+            banner_text.append("╰────────────────────────────────────────────────────────────╯", style="bold yellow")
+            self.console.console.print(banner_text)
+            self.console.console.print()
 
         scenario = self._load_scenario()
         name = scenario.get("scenario_name", "Corporate AD Lab")
-        self.console.print_info(f"Loaded scenario: [bold cyan]{name}[/bold cyan]")
-        self.console.print_info("Simulating multi-target SMB inspection...\n")
+        if not self.console.quiet:
+            self.console.print_info(f"Loaded scenario: [bold cyan]{name}[/bold cyan]")
+            self.console.print_info("Simulating multi-target SMB inspection...\n")
 
         targets_data = scenario.get("targets", [])
         result_set = ResultSet(job_id="demo-01", protocol="smb")
 
-        self.console.print_job_header("SMB", len(targets_data), workers=4)
+        if not self.console.quiet:
+            self.console.print_job_header("SMB", len(targets_data), workers=4)
 
         for item in targets_data:
             if self.speed > 0:
@@ -86,9 +89,11 @@ class DemoEngine:
                 data=data,
             )
             result_set.add(res)
-            self.console.print_result_line(res)
+            if not self.console.quiet:
+                self.console.print_result_line(res)
 
-        self.console.print_summary(result_set)
-        self.console.console.print("[dim]Demo mode — no network traffic was generated.[/dim]\n")
-        self.console.print_success("Safe demonstration completed successfully. Zero packets transmitted.")
+        if not self.console.quiet:
+            self.console.print_summary(result_set)
+            self.console.console.print("[dim]Demo mode — no network traffic was generated.[/dim]\n")
+            self.console.print_success("Safe demonstration completed successfully. Zero packets transmitted.")
         return result_set

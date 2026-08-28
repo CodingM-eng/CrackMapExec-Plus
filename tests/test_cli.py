@@ -86,11 +86,37 @@ def test_cli_protocol_help_ssh(capsys):
 
 
 def test_cli_command_help_workflows(capsys):
-    for cmd in ["wizard", "history", "batch", "report", "doctor"]:
+    for cmd in ["wizard", "history", "batch", "report", "doctor", "update", "bugs"]:
         ret = parse_and_execute([cmd, "--help"])
         assert ret == 0
         captured = capsys.readouterr()
         assert f"Command Help: {cmd.title()}" in captured.out
+
+
+def test_cli_update_check(capsys):
+    ret = parse_and_execute(["update", "--check"])
+    assert ret in (0, 1)
+    captured = capsys.readouterr()
+    assert "CrackMapExec+ System Check" in captured.out
+    assert "Version" in captured.out
+    assert "Environment" in captured.out
+
+
+def test_cli_bugs_list(capsys):
+    ret = parse_and_execute(["bugs"])
+    assert ret == 0
+    captured = capsys.readouterr()
+    assert ("Zero open bugs tracked" in captured.out) or ("Tracked Bug Reports" in captured.out)
+
+
+def test_cli_dev_doctor(capsys):
+    ret = parse_and_execute(["dev", "doctor"])
+    assert ret == 0
+    captured = capsys.readouterr()
+    assert "Developer Diagnostics" in captured.out
+    assert "Protocol Registry" in captured.out
+    assert "Module Registry" in captured.out
+    assert "DEVELOPER ENVIRONMENT READY" in captured.out
 
 
 def test_cli_video_smb_coming_soon(capsys):

@@ -17,11 +17,14 @@ from cmeplus import __version__
 from cmeplus.cli.commands import (
     handle_about,
     handle_batch_project,
+    handle_bugs,
     handle_command_help,
     handle_demo,
+    handle_dev_doctor,
     handle_explain,
     handle_history,
     handle_protocol_help,
+    handle_update,
     handle_version,
     handle_video_command,
     handle_wizard,
@@ -63,10 +66,14 @@ def print_categorized_help(console: Console) -> None:
     menu.append("  winrm     WinRM workflow & WS-Man administration\n", style="white")
     menu.append("  ssh       SSH workflow & secure shell exploration\n\n", style="white")
 
-    menu.append("Workflow & Tools:\n", style="bold cyan")
+    menu.append("Workflow & Assessment:\n", style="bold cyan")
     menu.append("  wizard    Interactive command builder\n", style="white")
     menu.append("  history   Execution history (metadata only)\n", style="white")
-    menu.append("  batch     Run a saved multi-job project\n", style="white")
+    menu.append("  batch     Run a saved multi-job project\n\n", style="white")
+
+    menu.append("System, Diagnostics & Bugs:\n", style="bold cyan")
+    menu.append("  update    Update engine & diagnostic check (update --check)\n", style="white")
+    menu.append("  bugs      Automated bug tracker (bugs --report, bugs sync)\n", style="white")
     menu.append("  doctor    Environment & PATH installation health check\n\n", style="white")
 
     menu.append("Learning:\n", style="bold cyan")
@@ -144,6 +151,15 @@ def parse_and_execute(argv: list[str] | None = None) -> int:
             return 0
         return handle_doctor(console_out)
 
+    if first_arg == "update":
+        return handle_update(argv[1:], console_out)
+
+    if first_arg == "bugs":
+        return handle_bugs(argv[1:], console_out)
+
+    if first_arg == "dev" and len(argv) > 1 and argv[1].lower() == "doctor":
+        return handle_dev_doctor(console_out)
+
     if "--explain" in argv:
         idx = argv.index("--explain")
         proto = argv[idx + 1] if idx + 1 < len(argv) else "smb"
@@ -152,7 +168,7 @@ def parse_and_execute(argv: list[str] | None = None) -> int:
         return 0
 
     # 5. Check for workflow commands with --help
-    if first_arg in ("wizard", "history", "batch", "doctor") and ("--help" in argv or "-h" in argv):
+    if first_arg in ("wizard", "history", "batch", "doctor", "update", "bugs") and ("--help" in argv or "-h" in argv):
         handle_command_help(first_arg, console_out)
         return 0
 

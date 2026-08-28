@@ -12,16 +12,19 @@
 
 ---
 
-## 📌 Project Overview & Status
+## 📌 Project Overview & Capabilities
 
-**Current Milestone**: `v0.1.0` (Core Architecture, APT Packaging & Rich Protocol Engine)
+**Current Milestone**: `v0.1.0` (Core Architecture, Self-Diagnostics, Automated Bug Tracking & Update Engine)
 
-CrackMapExec+ is inspired by the protocol-oriented ergonomics of CrackMapExec and NetExec, but built with a completely independent, modern, clean-room architecture in typed Python 3.11+. It delivers a modular engine where CLI, Target parsing, Concurrency pools, Protocol adapters, Reporting, Diagnostics, and Educational systems are decoupled.
+CrackMapExec+ is inspired by the protocol-oriented ergonomics of CrackMapExec and NetExec, but built with a completely independent, modern, clean-room architecture in typed Python 3.11+. It delivers a modular engine where CLI, Target parsing, Concurrency pools, Protocol adapters, Diagnostics, Bug Tracking, Reporting, and Educational systems are strictly decoupled.
 
-### Current Capabilities & Features
+### Key Capabilities & Features
 * ✅ **Global Standalone CLI**: Install globally via `pipx` or `./install.sh` without manual virtualenv activation.
+* ✅ **🔄 Update Engine (`update`)**: Method-aware self-updater (`pipx`, editable git, `virtualenv`, Debian package guidance).
+* ✅ **🩺 Self-Diagnostics & System Check (`update --check`)**: 30+ health checks across Environment, Package, Config, Core, Protocols, and offline Smoke Tests.
+* ✅ **🐛 Automated Bug Tracker (`bugs`)**: Privacy-conscious, fingerprint-deduplicated local bug tracking (`bugs/index.json` and `bugs/BUG-XXXX.md`) with optional GitHub sync.
+* ✅ **🛠️ Developer Diagnostics (`dev doctor`)**: Deep development environment evaluation (registries, tests, lint, git, GitHub auth).
 * ✅ **Debian / APT Packaging**: Native `.deb` build configuration (`debian/`) and APT repository generation tooling (`packaging/apt/`).
-* ✅ **🩺 Doctor Diagnostics (`doctor`)**: Environment, PATH, and configuration health check with actionable troubleshooting guidance.
 * ✅ **💎 Rich SMB Metadata Engine**: Non-intrusive NTLMSSP challenge analysis extracting authentic Hostname, Domain, Forest, OS Build, Dialect (`SMB 2.0.2` - `SMB 3.1.1`), and Signing requirements with adaptive terminal cards.
 * ✅ **Target Engine**: IPv4/IPv6, CIDR blocks (`/24`, `/29`), octet ranges, comma-separated lists, and `@targets.txt` file parsing with comment stripping (`#`) and line-numbered diagnostics.
 * ✅ **Job & Worker Engine**: Multi-protocol job chaining, bounded concurrency thread pool, exception isolation, and graceful cancellation.
@@ -80,28 +83,80 @@ pip install -e ".[dev]"
 
 ---
 
-## 🩺 Health Check & Diagnostics
+## 🩺 System Health Check & Self-Diagnostics
 
-Run the built-in diagnostic doctor to verify that Python, packages, CLI entry points, and configuration files are properly configured:
+Run the non-destructive diagnostic health check and update verification:
 
 ```bash
-crackmapexec+ doctor
+crackmapexec+ update --check
 # or
-cme+ doctor
+cme+ update --check
 ```
 
 Output:
 ```text
-╭──────────── CrackMapExec+ Doctor ────────────╮
-│ Python              ✓ v3.12.8 (CPython)      │
-│ Package             ✓ v0.1.0                 │
-│ crackmapexec+ PATH  ✓ /usr/local/bin/...     │
-│ cme+ PATH           ✓ /usr/local/bin/...     │
-│ Config directory    ✓ ~/.config/...          │
-│ Video catalog       ✓ 10 topics loaded       │
-│                                              │
-│ Installation status: HEALTHY                 │
-╰──────────────────────────────────────────────╯
+╭────────────────────────────────────────────────────────────╮
+│               CrackMapExec+ System Check                   │
+│       Diagnostics • Integrity • Update Availability        │
+╰────────────────────────────────────────────────────────────╯
+
+Version
+  Installed        0.1.0
+  Latest           0.1.0
+  Status           ✓ Up to date
+
+Environment
+  Python           ✓ Python v3.12.8 (CPython)
+  Platform         ✓ Linux 6.6.0 (x86_64)
+  Installation     ✓ pipx
+  PATH (cme+)      ✓ Available on PATH
+
+Core Subsystems
+  Target Engine    ✓ Target parsing and expansion operational
+  Job Engine       ✓ Job and Plan orchestration operational
+  Result Engine    ✓ Structured result tracking ready
+
+Protocols
+  Protocol (SMB)   ✓ SMB adapter operational (Port: 445)
+  Protocol (LDAP)  ✓ LDAP adapter operational (Port: 389)
+  Protocol (WINRM) ✓ WINRM adapter operational (Port: 5985)
+  Protocol (SSH)   ✓ SSH adapter operational (Port: 22)
+
+Diagnostics Summary
+  Total Checks     31
+  Passed           31
+  Warnings         0
+  Failed           0
+
+Overall Status:
+  ✓ HEALTHY
+```
+
+---
+
+## 🔄 Self-Update Engine
+
+Upgrade CrackMapExec+ to the latest release with automatic environment detection:
+
+```bash
+crackmapexec+ update
+```
+
+Supports `pipx`, editable git checkout, and `virtualenv`, and provides package manager instructions for Debian installations.
+
+---
+
+## 🐛 Automated Bug Tracking
+
+```bash
+# List tracked open bug reports
+crackmapexec+ bugs
+
+# View full markdown bug details
+crackmapexec+ bugs --report
+
+# Synchronize sanitized bug reports to GitHub (requires GitHub CLI / token)
+crackmapexec+ bugs sync
 ```
 
 ---
@@ -205,7 +260,7 @@ Generates reports in `reports/scan-YYYY-MM-DD-HH-MM-SS/` containing `report.json
 
 ## 🧪 Testing & Verification
 
-Run the full automated test suite (72 tests) and linter:
+Run the full automated test suite and linter:
 
 ```bash
 pytest -v tests/
@@ -218,6 +273,9 @@ ruff check src/ tests/
 
 * [Architecture & Design](docs/architecture.md)
 * [Installation Guide](docs/installation.md)
+* [Update Engine Guide](docs/update.md)
+* [Diagnostics & Smoke Testing](docs/diagnostics.md)
+* [Automated Bug Tracking](docs/bugs.md)
 * [Debian Packaging & APT Guide](docs/debian-packaging.md)
 * [CLI Reference](docs/cli.md)
 * [Protocol Drivers](docs/protocols.md)
