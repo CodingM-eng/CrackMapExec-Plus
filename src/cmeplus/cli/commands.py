@@ -200,13 +200,25 @@ def handle_command_help(command: str, console: OutputConsole) -> None:
         content.append("  and video catalog integrity with actionable fix instructions.\n\n", style="white")
 
     elif cmd == "update":
-        content.append("CrackMapExec+ Update & Diagnostic Engine\n\n", style="bold white")
+        content.append("CrackMapExec+ Release-Aware Update & Diagnostic Engine\n\n", style="bold white")
         content.append("Usage:\n", style="bold cyan")
-        content.append("  crackmapexec+ update                 Update application interactively\n", style="bold yellow")
-        content.append("  crackmapexec+ update --check         Run diagnostic health & update check\n\n", style="bold yellow")
+        content.append("  crackmapexec+ update                 Update application interactively (same-version protected)\n", style="bold yellow")
+        content.append("  crackmapexec+ update --check         Run diagnostic health & update check (non-destructive)\n", style="bold yellow")
+        content.append("  crackmapexec+ update --to <version>  Install/downgrade to a specific official release\n", style="bold yellow")
+        content.append("  crackmapexec+ update --list          List published releases (alias for releases)\n", style="bold yellow")
+        content.append("  crackmapexec+ update --choose        Interactive release selection menu\n\n", style="bold yellow")
         content.append("Description:\n", style="bold cyan")
-        content.append("  Verifies release versions, installation integrity, runs smoke tests,\n", style="white")
-        content.append("  and performs method-aware upgrades (pipx, editable git, virtualenv).\n\n", style="white")
+        content.append("  Verifies release versions against official GitHub releases, installation integrity,\n", style="white")
+        content.append("  runs offline smoke tests, and performs method-aware upgrades.\n\n", style="white")
+
+    elif cmd == "releases":
+        content.append("CrackMapExec+ Official GitHub Releases\n\n", style="bold white")
+        content.append("Usage:\n", style="bold cyan")
+        content.append("  crackmapexec+ releases               List published GitHub releases with release notes\n", style="bold yellow")
+        content.append("  crackmapexec+ releases <version>     View detailed release notes and features\n", style="bold yellow")
+        content.append("  crackmapexec+ releases open <version> Open GitHub release page in default browser\n\n", style="bold yellow")
+        content.append("Description:\n", style="bold cyan")
+        content.append("  Inspects published releases on the official GitHub repository (CodingM-eng/CrackMapExec-Plus).\n\n", style="white")
 
     elif cmd == "bugs":
         content.append("CrackMapExec+ Automated Bug Tracker\n\n", style="bold white")
@@ -228,17 +240,79 @@ def handle_command_help(command: str, console: OutputConsole) -> None:
 
 
 def handle_update(args: list[str], console: OutputConsole) -> int:
-    """Handle `crackmapexec+ update` and `crackmapexec+ update --check`."""
+    """Handle `crackmapexec+ update` and flags."""
     if "--help" in args or "-h" in args:
         handle_command_help("update", console)
         return 0
 
     engine = UpdateEngine(console=console)
+
     if "--check" in args:
         return engine.run_check()
 
+    if "--list" in args:
+        return engine.list_releases()
+
+    if "--choose" in args:
+        return engine.run_update(choose=True)
+
+    # Check for --to <version>
+    target_ver = None
+    if "--to" in args:
+        idx = args.index("--to")
+        if idx + 1 < len(args):
+            target_ver = args[idx + 1]
+        else:
+            console.print_failure("Missing version argument for --to (e.g. 'crackmapexec+ update --to 0.2.0').")
+            return 1
+
     force = "--force" in args
-    return engine.run_update(force=force)
+    return engine.run_update(target_version=target_ver, force=force)
+
+
+def handle_releases(args: list[str], console: OutputConsole) -> int:
+    """Handle `crackmapexec+ releases` commands."""
+    from cmeplus.update.releases import (
+        fetch_github_releases,
+        get_release_by_version,
+        open_release_in_browser,
+        render_release_detail,
+        render_releases_list,
+    )
+
+    if "--help" in args or "-h" in args:
+        handle_command_help("releases", console)
+        return 0
+
+    if not args:
+        releases, err = fetch_github_releases()
+        if err and not releases:
+            console.print_failure(f"Unable to check GitHub releases: {err}")
+            return 1
+        render_releases_list(console.console, releases)
+        return 0
+
+    sub = args[0].strip()
+
+    if sub == "open":
+        ver = args[1] if len(args) > 1 else __version__
+        rel, err = get_release_by_version(ver)
+        if not rel:
+            console.print_failure(f"Release '{ver}' not found: {err or 'Not found on GitHub'}")
+            return 1
+        console.print_info(f"Opening GitHub release {rel.tag_name} in default browser...")
+        open_release_in_browser(rel)
+        return 0
+
+    # Specific version details
+    rel, err = get_release_by_version(sub)
+    if not rel:
+        console.print_failure(f"Release '{sub}' not found.")
+        console.console.print("[dim]Run 'crackmapexec+ releases' to view published releases.[/dim]\n")
+        return 1
+
+    render_release_detail(console.console, rel)
+    return 0
 
 
 def handle_bugs(args: list[str], console: OutputConsole) -> int:

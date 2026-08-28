@@ -20,21 +20,19 @@ CrackMapExec+ is inspired by the protocol-oriented ergonomics of CrackMapExec an
 
 ### Key Capabilities & Features
 * ✅ **Global Standalone CLI**: Install globally via `pipx` or `./install.sh` without manual virtualenv activation.
-* ✅ **🔄 Update Engine (`update`)**: Method-aware self-updater (`pipx`, editable git, `virtualenv`, Debian package guidance).
-* ✅ **🩺 Self-Diagnostics & System Check (`update --check`)**: 30+ health checks across Environment, Package, Config, Core, Protocols, and offline Smoke Tests.
+* ✅ **🔄 Release-Aware Update Engine (`update`)**: Compares against official GitHub Releases with same-version update prevention, `--to <version>` upgrade/downgrade support, and `--choose` picker.
+* ✅ **📦 GitHub Releases Management (`releases`)**: Browse published releases, features, and release notes directly from GitHub (`releases <version>`, `releases open <version>`).
+* ✅ **🌐 Universal TransportEngine & Connection States**: Decouples TCP reachability from L7 protocol negotiation, session setup, and authentication across all protocols.
+* ✅ **🔍 Multi-Stage Connection Diagnostics (`--verbose`)**: Detailed breakdown of TCP L4 socket status, Protocol L7 negotiation, session setup, and authentication states.
+* ✅ **💎 Rich Multi-Protocol Metadata Engine**: Non-intrusive metadata extraction across **SMB, LDAP, WinRM, and SSH** with adaptive wide/compact terminal cards.
+* ✅ **🩺 Self-Diagnostics & System Check (`update --check`)**: 25+ health checks across Environment, Package, Config, Core, Protocols, and offline Smoke Tests.
 * ✅ **🐛 Automated Bug Tracker (`bugs`)**: Privacy-conscious, fingerprint-deduplicated local bug tracking (`bugs/index.json` and `bugs/BUG-XXXX.md`) with optional GitHub sync.
 * ✅ **🛠️ Developer Diagnostics (`dev doctor`)**: Deep development environment evaluation (registries, tests, lint, git, GitHub auth).
-* ✅ **Debian / APT Packaging**: Native `.deb` build configuration (`debian/`) and APT repository generation tooling (`packaging/apt/`).
-* ✅ **💎 Rich SMB Metadata Engine**: Non-intrusive NTLMSSP challenge analysis extracting authentic Hostname, Domain, Forest, OS Build, Dialect (`SMB 2.0.2` - `SMB 3.1.1`), and Signing requirements with adaptive terminal cards.
-* ✅ **Target Engine**: IPv4/IPv6, CIDR blocks (`/24`, `/29`), octet ranges, comma-separated lists, and `@targets.txt` file parsing with comment stripping (`#`) and line-numbered diagnostics.
-* ✅ **Job & Worker Engine**: Multi-protocol job chaining, bounded concurrency thread pool, exception isolation, and graceful cancellation.
-* ✅ **Protocol Adapters**: Drivers for `smb`, `ldap`, `winrm`, and `ssh` with capability declarations.
-* ✅ **Module System**: Pluggable post-enumeration modules (`shares`, `users`, `passpol`) via `-L` and `-M`.
+* ✅ **Target Engine**: IPv4/IPv6, CIDR blocks (`/24`, `/29`), octet ranges, comma-separated lists, and `@targets.txt` file parsing.
+* ✅ **Job & Concurrency Engine**: Multi-protocol job chaining, bounded concurrency thread pool, exception isolation, and graceful cancellation.
 * ✅ **🎥 Video Guide Center (`--video` / `--v`)**: Built-in interactive tutorial system with timestamp URL calculations.
-* ✅ **🧙 Interactive Wizard (`wizard`)**: Terminal prompts that compile user choices into standard executable jobs.
-* ✅ **🛡️ Safe Demo Simulator (`--demo`)**: 100% offline, zero-network seminar and workshop presentation mode.
+* ✅ **🛡️ Safe Demo Simulator (`--demo`)**: 100% offline, multi-protocol seminar and workshop presentation mode.
 * ✅ **📊 Multi-Format Reporting (`--report`, `--format json`)**: Machine-readable JSON and modern dark security-dashboard HTML bundles.
-* ✅ **🔒 Credential Hygiene & History (`history`)**: Local SQLite metadata tracking that strictly forbids saving passwords or hashes.
 
 ---
 

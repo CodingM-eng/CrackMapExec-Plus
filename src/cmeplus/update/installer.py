@@ -48,13 +48,15 @@ def detect_installation_method() -> InstallationMethod:
 def execute_update(
     method: InstallationMethod,
     repo: str = "CodingM-eng/CrackMapExec-Plus",
+    target_tag: str | None = None,
 ) -> tuple[bool, str]:
     """Execute update operation according to the detected installation method.
 
     Returns:
         (success, message)
     """
-    git_url = f"git+https://github.com/{repo}.git"
+    tag_suffix = f"@{target_tag}" if target_tag else ""
+    git_url = f"git+https://github.com/{repo}.git{tag_suffix}"
 
     if method == InstallationMethod.PIPX:
         pipx_bin = shutil.which("pipx") or "pipx"
@@ -67,7 +69,7 @@ def execute_update(
                 timeout=120,
             )
             if res.returncode == 0:
-                return True, "Successfully updated via pipx."
+                return True, f"Successfully updated to {target_tag or 'latest'} via pipx."
             return False, f"pipx upgrade failed: {res.stderr.strip() or res.stdout.strip()}"
         except Exception as exc:
             return False, f"Failed to execute pipx update: {exc}"
@@ -76,17 +78,30 @@ def execute_update(
         repo_root = Path(__file__).resolve().parents[3]
         git_bin = shutil.which("git") or "git"
         try:
-            # 1. Git pull
-            pull_res = subprocess.run(
-                [git_bin, "pull"],
-                cwd=str(repo_root),
-                capture_output=True,
-                text=True,
-                check=False,
-                timeout=60,
-            )
-            if pull_res.returncode != 0:
-                return False, f"Git pull failed: {pull_res.stderr.strip()}"
+            if target_tag:
+                # Checkout specific tag or commit
+                checkout_res = subprocess.run(
+                    [git_bin, "checkout", target_tag],
+                    cwd=str(repo_root),
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                    timeout=60,
+                )
+                if checkout_res.returncode != 0:
+                    return False, f"Git checkout {target_tag} failed: {checkout_res.stderr.strip()}"
+            else:
+                # 1. Git pull
+                pull_res = subprocess.run(
+                    [git_bin, "pull"],
+                    cwd=str(repo_root),
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                    timeout=60,
+                )
+                if pull_res.returncode != 0:
+                    return False, f"Git pull failed: {pull_res.stderr.strip()}"
 
             # 2. Pip install -e .
             pip_res = subprocess.run(
@@ -98,41 +113,41 @@ def execute_update(
                 timeout=120,
             )
             if pip_res.returncode == 0:
-                return True, "Successfully pulled latest commits and re-installed editable package."
+                return True, f"Updated local repository and reinstalled editable package ({target_tag or 'main'})."
             return False, f"pip install -e failed: {pip_res.stderr.strip()}"
         except Exception as exc:
-            return False, f"Failed to execute editable development update: {exc}"
+            return False, f"Failed to update git repository: {exc}"
 
     elif method == InstallationMethod.VIRTUALENV:
         try:
             res = subprocess.run(
-                [sys.executable, "-m", "pip", "install", "--upgrade", git_url],
+                [sys.executable, "-m", "pip", "install", "--upgrade", "--force-reinstall", git_url],
                 capture_output=True,
                 text=True,
                 check=False,
                 timeout=120,
             )
             if res.returncode == 0:
-                return True, "Successfully updated package inside active virtualenv."
-            return False, f"Virtualenv pip update failed: {res.stderr.strip()}"
+                return True, f"Virtualenv updated to {target_tag or 'latest'}."
+            return False, f"pip upgrade failed: {res.stderr.strip()}"
         except Exception as exc:
-            return False, f"Failed to execute virtualenv update: {exc}"
+            return False, f"Failed to execute pip update: {exc}"
 
     elif method == InstallationMethod.DEBIAN:
-        msg = (
-            "Update method not supported automatically.\n\n"
-            "Detected installation:\n"
-            "Debian package\n\n"
-            "Use your package manager to update CrackMapExec+:\n"
-            "  sudo apt update && sudo apt install --only-upgrade crackmapexec-plus"
+        return (
+            False,
+            "CrackMapExec+ is installed via Debian package (.deb / APT).\n\n"
+            "To update, use your system package manager:\n"
+            "  sudo apt update\n"
+            "  sudo apt install --only-upgrade crackmapexec-plus\n",
         )
-        return False, msg
 
-    else:
-        msg = (
-            "Update method not supported automatically for system-wide installation.\n\n"
-            "Detected installation:\n"
-            "System package\n\n"
-            "Please update via pipx, apt, or your system package manager."
+    elif method == InstallationMethod.SYSTEM:
+        return (
+            False,
+            "CrackMapExec+ is installed as a system package.\n\n"
+            "To update safely without breaking system packages, use pipx:\n"
+            f"  pipx install --force {git_url}\n",
         )
-        return False, msg
+
+    return False, "Unknown installation environment."

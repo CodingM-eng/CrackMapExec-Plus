@@ -54,11 +54,14 @@ class DiagnosticFormatter:
         else:
             content.append(f"Unable to check ({version_info.error or 'offline'})\n", style="dim white")
 
+        content.append(f"  {'Source':<16} ", style="bold white")
+        content.append(f"{version_info.source}\n", style="dim cyan")
+
         content.append(f"  {'Status':<16} ", style="bold white")
         if version_info.is_update_available:
-            content.append("⚠ Update available\n\n", style="bold yellow")
+            content.append("⚠ Update available (Run 'crackmapexec+ update' to upgrade)\n\n", style="bold yellow")
         elif version_info.latest:
-            content.append("✓ Up to date\n\n", style="bold green")
+            content.append("✓ You are already running the latest version. There is no need to update.\n\n", style="bold green")
         else:
             content.append("○ Offline mode (Local checks active)\n\n", style="dim white")
 
@@ -123,10 +126,12 @@ class DiagnosticFormatter:
         content.append(f"{report.total}\n", style="bold white")
         content.append(f"  {'Passed':<16} ", style="bold white")
         content.append(f"{report.passed_count}\n", style="bold green")
+        warn_c = int(getattr(report, "warn_count", 0) or 0)
+        fail_c = int(getattr(report, "failed_count", 0) or 0)
         content.append(f"  {'Warnings':<16} ", style="bold white")
-        content.append(f"{report.warn_count}\n", style="bold yellow" if report.warn_count > 0 else "dim white")
+        content.append(f"{report.warn_count}\n", style="bold yellow" if warn_c > 0 else "dim white")
         content.append(f"  {'Failed':<16} ", style="bold white")
-        content.append(f"{report.failed_count}\n\n", style="bold red" if report.failed_count > 0 else "dim white")
+        content.append(f"{report.failed_count}\n\n", style="bold red" if fail_c > 0 else "dim white")
 
         # 8. Bugs Summary
         content.append("Bug Tracking\n", style="bold cyan")

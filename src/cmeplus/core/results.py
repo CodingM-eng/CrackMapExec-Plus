@@ -10,11 +10,14 @@ from typing import Any
 
 class ResultState(str, Enum):
     SUCCESS = "success"
+    REACHABLE = "reachable"
+    AUTH_REQUIRED = "auth_required"
+    AUTH_FAILED = "auth_failed"
+    NEGOTIATION_FAILED = "negotiation_failed"
     FAILED = "failed"
     SKIPPED = "skipped"
     TIMEOUT = "timeout"
     UNAVAILABLE = "unavailable"
-    AUTH_FAILED = "auth_failed"
     ERROR = "error"
 
     @property
@@ -22,11 +25,14 @@ class ResultState(str, Enum):
         """Standard status symbol badge for terminal UI."""
         mapping = {
             ResultState.SUCCESS: "[+]",
+            ResultState.REACHABLE: "[*]",
+            ResultState.AUTH_REQUIRED: "[!]",
+            ResultState.AUTH_FAILED: "[-]",
+            ResultState.NEGOTIATION_FAILED: "[-]",
             ResultState.FAILED: "[-]",
             ResultState.SKIPPED: "[*]",
             ResultState.TIMEOUT: "[!]",
             ResultState.UNAVAILABLE: "[-]",
-            ResultState.AUTH_FAILED: "[-]",
             ResultState.ERROR: "[!]",
         }
         return mapping.get(self, "[*]")
@@ -36,11 +42,14 @@ class ResultState(str, Enum):
         """Terminal color code associated with state."""
         mapping = {
             ResultState.SUCCESS: "green",
+            ResultState.REACHABLE: "cyan",
+            ResultState.AUTH_REQUIRED: "yellow",
+            ResultState.AUTH_FAILED: "red",
+            ResultState.NEGOTIATION_FAILED: "red",
             ResultState.FAILED: "red",
             ResultState.SKIPPED: "yellow",
             ResultState.TIMEOUT: "yellow",
             ResultState.UNAVAILABLE: "red",
-            ResultState.AUTH_FAILED: "red",
             ResultState.ERROR: "bold red",
         }
         return mapping.get(self, "white")
@@ -62,7 +71,7 @@ class Result:
 
     @property
     def is_success(self) -> bool:
-        return self.status == ResultState.SUCCESS
+        return self.status in (ResultState.SUCCESS, ResultState.REACHABLE, ResultState.AUTH_REQUIRED)
 
     @property
     def hostname(self) -> str | None:
@@ -70,7 +79,7 @@ class Result:
 
     @property
     def os(self) -> str | None:
-        return self.data.get("os")
+        return self.data.get("os") or self.data.get("os_name") or self.data.get("os_version")
 
     @property
     def build(self) -> str | None:
@@ -83,6 +92,10 @@ class Result:
     @property
     def domain(self) -> str | None:
         return self.data.get("domain")
+
+    @property
+    def role(self) -> str | None:
+        return self.data.get("server_role") or self.data.get("role")
 
     @property
     def smb_dialect(self) -> str | None:
@@ -98,7 +111,11 @@ class Result:
 
     @property
     def smbv1(self) -> bool | None:
-        return self.data.get("smbv1", False)
+        if "smbv1" in self.data:
+            return bool(self.data["smbv1"])
+        if "smbv1_enabled" in self.data:
+            return bool(self.data["smbv1_enabled"])
+        return None
 
     def to_dict(self) -> dict[str, Any]:
         res: dict[str, Any] = {

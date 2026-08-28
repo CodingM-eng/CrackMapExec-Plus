@@ -3,52 +3,74 @@ scenario_name: "MegaCorp Authorized CTF Lab"
 domain: "LAB.ENTERPRISE.THM"
 
 targets:
-  - ip: "10.114.165.21"
+  - ip: "10.10.10.10"
     hostname: "LAB-DC"
-    os: "Windows 10 / Server 2019"
+    os: "Windows Server 2019"
     build: "17763"
     architecture: "x64"
     domain: "LAB.ENTERPRISE.THM"
+    role: "Domain Controller"
     protocol: "smb"
     port: 445
-    smb_version: "SMB2"
-    smb_dialect: "SMB2"
+    smb_version: "SMB 3.1.1"
+    smb_dialect: "SMB 3.1.1"
     signing: true
+    signing_required: true
     smbv1: false
+    auth_state: "Credentials Required"
     status: "success"
-    duration: 0.16
-    message: "Connected (SMB2) (Signing: REQUIRED)"
+    duration: 0.12
+    message: "Connected (SMB 3.1.1) (Signing: REQUIRED)"
     shares: ["ADMIN$", "C$", "IPC$", "NETLOGON", "SYSVOL", "Backups"]
     users: ["Administrator", "krbtgt", "svc_backup", "jdoe", "asmith"]
 
-  - ip: "10.114.165.22"
-    hostname: "FS01"
-    os: "Windows Server 2019 Standard"
-    build: "17763"
+  - ip: "10.10.10.10"
+    hostname: "LAB-DC"
+    os: "Windows Server 2019 (Active Directory LDAP)"
+    domain: "LAB.ENTERPRISE.THM"
+    role: "Domain Controller"
+    protocol: "ldap"
+    port: 389
+    default_naming_context: "DC=lab,DC=enterprise,DC=thm"
+    supported_sasl_mechanisms: ["GSS-SPNEGO", "GSSAPI", "NTLM", "DIGEST-MD5"]
+    tls_status: "TLS Available (Port 636 / StartTLS)"
+    auth_state: "Anonymous / Bind Required"
+    status: "success"
+    duration: 0.09
+    message: "LDAP Reachable (Port 389) • RootDSE: DC=lab,DC=enterprise,DC=thm"
+
+  - ip: "10.10.10.20"
+    hostname: "MGMT-WS01"
+    os: "Windows 11 Pro (WS-Management WinRM)"
+    build: "22631"
     architecture: "x64"
     domain: "LAB.ENTERPRISE.THM"
-    protocol: "smb"
-    port: 445
-    smb_version: "SMB 3.0"
-    smb_dialect: "SMB 3.0"
-    signing: false
-    smbv1: false
-    status: "success"
-    duration: 0.12
-    message: "Connected (SMB 3.0) (Signing: False)"
-    shares: ["C$", "Finance", "HR", "SharedDocs"]
-    users: ["Administrator", "local_admin"]
-
-  - ip: "10.114.165.30"
-    hostname: "DEV-WS01"
-    os: "Windows 11 Pro Build 22631 (x64)"
     protocol: "winrm"
     port: 5985
+    wsman_version: "WS-Man 2.0 (WinRM 2.0+)"
+    auth_schemes: ["Negotiate", "Kerberos", "NTLM", "Basic"]
+    server_header: "Microsoft-HTTPAPI/2.0"
+    auth_state: "Authentication Required"
     status: "success"
     duration: 0.08
-    message: "WinRM HTTP active (PowerShell 7.4 Remoting endpoint)"
+    message: "WinRM Reachable (HTTP 401) • Schemes: Negotiate, Kerberos, NTLM"
 
-  - ip: "10.114.165.254"
+  - ip: "10.10.10.30"
+    hostname: "LINUX-GW01"
+    os: "Linux (Ubuntu 22.04 LTS)"
+    architecture: "x64"
+    domain: "LAB.ENTERPRISE.THM"
+    protocol: "ssh"
+    port: 22
+    banner: "SSH-2.0-OpenSSH_8.9p1 Ubuntu-3ubuntu0.10"
+    protocol_version: "2.0"
+    software_version: "OpenSSH_8.9p1"
+    auth_state: "Password / Public Key Required"
+    status: "success"
+    duration: 0.06
+    message: "SSH Reachable (Port 22) (SSH-2.0-OpenSSH_8.9p1 Ubuntu-3ubuntu0.10)"
+
+  - ip: "10.10.10.254"
     hostname: "OFFLINE-HOST"
     protocol: "smb"
     port: 445

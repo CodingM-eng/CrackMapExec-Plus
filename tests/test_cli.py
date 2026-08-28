@@ -202,16 +202,29 @@ def test_cli_demo_mode_rich_smb_card(capsys):
     assert ret == 0
     captured = capsys.readouterr()
     assert "CrackMapExec+ Safe Demo Mode" in captured.out
-    assert "SMB • 10.114.165.21" in captured.out
-    assert "STATUS" in captured.out
-    assert "SUCCESS" in captured.out
+    assert "SMB • 10.10.10.10:445" in captured.out
     assert "LAB-DC" in captured.out
-    assert "Windows 10 / Server 2019" in captured.out
+    assert "Windows Server 2019" in captured.out
     assert "17763" in captured.out
     assert "LAB.ENTERPRISE.THM" in captured.out
-    assert "SMB2" in captured.out
-    assert "True" in captured.out
+    assert "SMB 3.1.1" in captured.out
+    assert "Required" in captured.out
     assert "Demo mode — no network traffic was generated." in captured.out
+
+
+def test_cli_releases_command(capsys):
+    ret = parse_and_execute(["releases"])
+    assert ret == 0
+    captured = capsys.readouterr()
+    assert "CrackMapExec+ Releases" in captured.out
+    assert "Published Releases" in captured.out
+
+
+def test_cli_releases_help(capsys):
+    ret = parse_and_execute(["releases", "--help"])
+    assert ret == 0
+    captured = capsys.readouterr()
+    assert "Command Help: Releases" in captured.out
 
 
 def test_cli_mock_scan_execution(capsys):

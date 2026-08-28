@@ -26,7 +26,7 @@ class DemoEngine:
         return {}
 
     def run(self, scenario_name: str | None = None) -> ResultSet:
-        """Run the simulated seminar demonstration with rich SMB metadata output."""
+        """Run the simulated seminar demonstration with rich multi-protocol metadata output."""
         if not self.console.quiet:
             banner_text = Text()
             banner_text.append("╭────────────────────────────────────────────────────────────╮\n", style="bold yellow")
@@ -41,16 +41,16 @@ class DemoEngine:
             self.console.console.print()
 
         scenario = self._load_scenario()
-        name = scenario.get("scenario_name", "Corporate AD Lab")
+        name = scenario.get("scenario_name", "MegaCorp Authorized CTF Lab")
         if not self.console.quiet:
             self.console.print_info(f"Loaded scenario: [bold cyan]{name}[/bold cyan]")
-            self.console.print_info("Simulating multi-target SMB inspection...\n")
+            self.console.print_info("Simulating multi-protocol lab service inspection...\n")
 
         targets_data = scenario.get("targets", [])
-        result_set = ResultSet(job_id="demo-01", protocol="smb")
+        result_set = ResultSet(job_id="demo-01", protocol="multi")
 
         if not self.console.quiet:
-            self.console.print_job_header("SMB", len(targets_data), workers=4)
+            self.console.print_job_header("MULTI-PROTOCOL", len(targets_data), workers=4)
 
         for item in targets_data:
             if self.speed > 0:
@@ -62,25 +62,34 @@ class DemoEngine:
             port = item.get("port", 445)
             proto = item.get("protocol", "smb")
             msg = item.get("message", "Simulated response")
-            shares = item.get("shares", [])
             duration = float(item.get("duration", 0.03))
 
             data = {
                 "hostname": item.get("hostname"),
                 "os": item.get("os"),
+                "os_name": item.get("os"),
                 "build": item.get("build"),
                 "architecture": item.get("architecture", "x64"),
-                "domain": item.get("domain", scenario.get("domain", "CORP.LOCAL")),
-                "smb_dialect": item.get("smb_dialect", item.get("smb_version", "SMB2")),
-                "smb_version": item.get("smb_version", "SMB2"),
-                "signing": item.get("signing", True),
-                "signing_required": item.get("signing", True),
-                "smbv1": item.get("smbv1", False),
-                "shares": shares,
+                "domain": item.get("domain", scenario.get("domain", "LAB.ENTERPRISE.THM")),
+                "server_role": item.get("role", ""),
+                "smb_dialect": item.get("smb_dialect", item.get("smb_version", "")),
+                "signing_required": item.get("signing", item.get("signing_required", False)),
+                "smbv1_enabled": item.get("smbv1", False),
+                "default_naming_context": item.get("default_naming_context"),
+                "supported_sasl_mechanisms": item.get("supported_sasl_mechanisms", []),
+                "tls_status": item.get("tls_status"),
+                "wsman_version": item.get("wsman_version"),
+                "auth_schemes": item.get("auth_schemes", []),
+                "server_header": item.get("server_header"),
+                "banner": item.get("banner"),
+                "software_version": item.get("software_version"),
+                "auth_state": item.get("auth_state", "Credentials Required"),
+                "shares": item.get("shares", []),
+                "users": item.get("users", []),
             }
 
             res = Result(
-                target=f"{ip}:{port}" if port != 445 else ip,
+                target=ip,
                 port=port,
                 protocol=proto,
                 status=status,

@@ -9,11 +9,13 @@ from typing import Any
 from cmeplus.core.jobs import JobCredentials
 from cmeplus.core.results import Result, ResultState
 from cmeplus.core.targets import Target
+from cmeplus.transport.engine import TransportEngine
 
 
 @dataclass(frozen=True)
 class ProtocolCapabilities:
     """Explicit declaration of what operations a protocol driver supports."""
+
     can_connect: bool = True
     can_authenticate: bool = True
     can_enum_shares: bool = False
@@ -48,6 +50,7 @@ class BaseProtocol(ABC):
         self.is_connected = False
         self.is_authenticated = False
         self.session_data: dict[str, Any] = {}
+        self.transport = TransportEngine()
 
     @abstractmethod
     def connect(self) -> Result:
@@ -84,3 +87,13 @@ class BaseProtocol(ABC):
     def get_educational_summary(cls) -> dict[str, Any]:
         """Return educational overview, purpose, and lab concepts for --explain."""
         pass
+
+    @classmethod
+    def health_check(cls) -> dict[str, Any]:
+        """Perform safe local health check of protocol driver without scanning external targets."""
+        return {
+            "protocol": cls.name,
+            "default_port": cls.default_port,
+            "capabilities": cls.capabilities,
+            "status": "ready",
+        }

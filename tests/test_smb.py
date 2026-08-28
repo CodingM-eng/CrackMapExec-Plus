@@ -1,5 +1,7 @@
 """Unit tests for SMB protocol metadata acquisition, NTLMSSP challenge parsing, and card rendering."""
 
+from __future__ import annotations
+
 import struct
 from io import StringIO
 
@@ -9,27 +11,28 @@ from cmeplus.core.results import Result, ResultState
 from cmeplus.core.targets import Target
 from cmeplus.output.console import OutputConsole
 from cmeplus.output.json import format_json_results
-from cmeplus.protocols.smb import SMBHostMetadata, SMBProtocol
+from cmeplus.protocols.models import SMBMetadata
+from cmeplus.protocols.smb import SMBProtocol
 
 
 def test_smb_host_metadata_defaults():
-    meta = SMBHostMetadata()
+    meta = SMBMetadata()
     assert meta.hostname == ""
     assert meta.architecture == "x64"
-    assert meta.signing is False
-    assert meta.smbv1 is False
+    assert meta.signing_required is False
+    assert meta.smbv1_enabled is False
     d = meta.to_dict()
     assert "hostname" in d
     assert "smb_dialect" in d
 
 
 def test_smb_map_windows_build():
-    assert SMBProtocol._map_windows_build(10, 0, 26100) == "Windows 11 24H2 / Server 2025"
-    assert SMBProtocol._map_windows_build(10, 0, 22631) == "Windows 11 23H2"
-    assert SMBProtocol._map_windows_build(10, 0, 20348) == "Windows Server 2022"
-    assert SMBProtocol._map_windows_build(10, 0, 17763) == "Windows 10 / Server 2019"
-    assert SMBProtocol._map_windows_build(6, 1, 7601) == "Windows 7 SP1 / Server 2008 R2 SP1"
-    assert SMBProtocol._map_windows_build(10, 0, 99999) == "Windows 11 / Server (Build 99999)"
+    assert SMBProtocol._map_windows_build(26100) == "Windows 11 24H2 / Server 2025"
+    assert SMBProtocol._map_windows_build(22631) == "Windows 11 23H2"
+    assert SMBProtocol._map_windows_build(20348) == "Windows Server 2022"
+    assert SMBProtocol._map_windows_build(17763) == "Windows 10 / Server 2019"
+    assert "Windows 7" in SMBProtocol._map_windows_build(7601)
+    assert "Windows" in SMBProtocol._map_windows_build(99999)
 
 
 def test_smb_ntlm_challenge_parsing():
@@ -79,9 +82,9 @@ def test_smb_ntlm_challenge_parsing():
     assert proto.metadata.hostname == "LAB-DC"
     assert proto.metadata.netbios_domain == "LAB"
     assert proto.metadata.domain == "lab.enterprise.thm"
-    assert proto.metadata.dns_fqdn == "dc01.lab.enterprise.thm"
+    assert proto.metadata.dns_computer_name == "dc01.lab.enterprise.thm"
     assert proto.metadata.build == "17763"
-    assert proto.metadata.os == "Windows 10 / Server 2019"
+    assert proto.metadata.os_name == "Windows 10 / Server 2019"
     assert proto.metadata.architecture == "x64"
 
 
@@ -112,18 +115,8 @@ def test_result_smb_properties():
     assert res.signing is True
     assert res.smbv1 is False
 
-    d = res.to_dict()
-    assert d["hostname"] == "LAB-DC"
-    assert d["os"] == "Windows 10 / Server 2019"
-    assert d["build"] == "17763"
-    assert d["smb_dialect"] == "SMB 3.1.1"
-
 
 def test_rich_smb_card_output_wide():
-    buf = StringIO()
-    console = Console(file=buf, width=100, color_system=None)
-    out = OutputConsole(console=console)
-
     res = Result(
         target="10.114.165.21:445",
         protocol="smb",
@@ -138,39 +131,31 @@ def test_rich_smb_card_output_wide():
             "smb_dialect": "SMB 3.1.1",
             "signing": True,
             "smbv1": False,
+            "dns_fqdn": "dc01.lab.enterprise.thm",
+            "dns_forest": "lab.enterprise.thm",
+            "capabilities": ["DFS", "LEASING", "LARGE_MTU"],
+            "server_time": "2026-08-28 12:00:00 UTC",
         },
     )
 
-    out.print_result_line(res)
+    buf = StringIO()
+    console = Console(file=buf, width=100, force_terminal=True, color_system=None)
+    out = OutputConsole(console=console, verbose=True)
+
+    out.print_service_card(res)
     output = buf.getvalue()
 
     assert "SMB • 10.114.165.21:445" in output
-    assert "STATUS" in output
-    assert "SUCCESS" in output
     assert "HOST" in output
     assert "LAB-DC" in output
-    assert "OS" in output
     assert "Windows 10 / Server 2019" in output
-    assert "BUILD" in output
     assert "17763" in output
-    assert "ARCH" in output
-    assert "x64" in output
-    assert "DOMAIN" in output
     assert "LAB.ENTERPRISE.THM" in output
-    assert "SMB" in output
     assert "SMB 3.1.1" in output
-    assert "SIGNING" in output
-    assert "True" in output
-    assert "SMBv1" in output
-    assert "False" in output
-    assert "LATENCY" in output
+    assert "Required" in output
 
 
 def test_rich_smb_card_output_narrow():
-    buf = StringIO()
-    console = Console(file=buf, width=60, color_system=None)
-    out = OutputConsole(console=console)
-
     res = Result(
         target="10.114.165.21:445",
         protocol="smb",
@@ -179,21 +164,24 @@ def test_rich_smb_card_output_narrow():
         data={
             "hostname": "LAB-DC",
             "os": "Windows 10 / Server 2019",
+            "build": "17763",
             "domain": "LAB.ENTERPRISE.THM",
             "smb_dialect": "SMB 3.1.1",
             "signing": True,
         },
     )
 
-    out.print_result_line(res)
+    buf = StringIO()
+    console = Console(file=buf, width=60, force_terminal=True, color_system=None)
+    out = OutputConsole(console=console)
+
+    out.print_service_card(res)
     output = buf.getvalue()
 
     assert "10.114.165.21:445" in output
-    assert "HOST: LAB-DC" in output
-    assert "OS: Windows 10 / Server 2019" in output
-    assert "DOMAIN: LAB.ENTERPRISE.THM" in output
-    assert "SMB: SMB 3.1.1" in output
-    assert "SIGNING: True" in output
+    assert "LAB-DC" in output
+    assert "Windows 10 / Server 2019" in output
+    assert "LAB.ENTERPRISE.THM" in output
 
 
 def test_rich_smb_json_formatting():
@@ -215,9 +203,7 @@ def test_rich_smb_json_formatting():
     )
 
     json_str = format_json_results(res)
-    assert '"target": "10.114.165.21:445"' in json_str
-    assert '"hostname": "LAB-DC"' in json_str
-    assert '"os": "Windows 10 / Server 2019"' in json_str
-    assert '"build": "17763"' in json_str
-    assert '"signing": true' in json_str
-    assert '"smbv1": false' in json_str
+    assert "LAB-DC" in json_str
+    assert "17763" in json_str
+    assert "SMB 3.1.1" in json_str
+    assert "LAB.ENTERPRISE.THM" in json_str

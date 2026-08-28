@@ -24,6 +24,7 @@ from cmeplus.cli.commands import (
     handle_explain,
     handle_history,
     handle_protocol_help,
+    handle_releases,
     handle_update,
     handle_version,
     handle_video_command,
@@ -72,7 +73,8 @@ def print_categorized_help(console: Console) -> None:
     menu.append("  batch     Run a saved multi-job project\n\n", style="white")
 
     menu.append("System, Diagnostics & Bugs:\n", style="bold cyan")
-    menu.append("  update    Update engine & diagnostic check (update --check)\n", style="white")
+    menu.append("  update    Update engine & diagnostic check (update --check, update --to)\n", style="white")
+    menu.append("  releases  Official GitHub releases & version history (releases <ver>)\n", style="white")
     menu.append("  bugs      Automated bug tracker (bugs --report, bugs sync)\n", style="white")
     menu.append("  doctor    Environment & PATH installation health check\n\n", style="white")
 
@@ -82,7 +84,7 @@ def print_categorized_help(console: Console) -> None:
     menu.append("  --explain In-depth educational protocol explanation\n\n", style="white")
 
     menu.append("Output & Options:\n", style="bold cyan")
-    menu.append("  --verbose Detailed Tier-3 service metadata (DNS, Forest, Caps)\n", style="white")
+    menu.append("  --verbose Detailed multi-stage connection diagnostics\n", style="white")
     menu.append("  --report  Generate HTML dashboard and JSON report bundle\n", style="white")
     menu.append("  --format  Select output format: console (default), json, quiet\n\n", style="white")
 
@@ -154,6 +156,9 @@ def parse_and_execute(argv: list[str] | None = None) -> int:
     if first_arg == "update":
         return handle_update(argv[1:], console_out)
 
+    if first_arg == "releases":
+        return handle_releases(argv[1:], console_out)
+
     if first_arg == "bugs":
         return handle_bugs(argv[1:], console_out)
 
@@ -168,7 +173,7 @@ def parse_and_execute(argv: list[str] | None = None) -> int:
         return 0
 
     # 5. Check for workflow commands with --help
-    if first_arg in ("wizard", "history", "batch", "doctor", "update", "bugs") and ("--help" in argv or "-h" in argv):
+    if first_arg in ("wizard", "history", "batch", "doctor", "update", "releases", "bugs") and ("--help" in argv or "-h" in argv):
         handle_command_help(first_arg, console_out)
         return 0
 

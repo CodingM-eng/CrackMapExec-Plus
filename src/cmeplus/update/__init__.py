@@ -5,11 +5,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from cmeplus.update.installer import InstallationMethod, detect_installation_method
+from cmeplus.update.releases import ReleaseInfo, fetch_github_releases, get_release_by_version
 from cmeplus.update.version import (
     VersionInfo,
     compare_versions,
     get_installed_version,
-    get_latest_version,
+    is_downgrade,
+    parse_semver,
 )
 
 if TYPE_CHECKING:
@@ -30,6 +32,10 @@ __all__ = [
     "detect_installation_method",
     "VersionInfo",
     "compare_versions",
+    "is_downgrade",
+    "parse_semver",
     "get_installed_version",
-    "get_latest_version",
+    "ReleaseInfo",
+    "fetch_github_releases",
+    "get_release_by_version",
 ]

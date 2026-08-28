@@ -21,8 +21,12 @@ class JobCredentials:
     key_path: str | None = None
     local_auth: bool = False
 
+    @property
+    def has_auth(self) -> bool:
+        return bool(self.username or self.password or self.ntlm_hash or self.key_path)
+
     def is_anonymous(self) -> bool:
-        return not (self.username or self.password or self.ntlm_hash or self.key_path)
+        return not self.has_auth
 
 
 @dataclass

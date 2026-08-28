@@ -1,53 +1,37 @@
 # Protocol Drivers
 
-CrackMapExec+ provides a modular protocol plugin system. Each driver implements the `BaseProtocol` interface.
+CrackMapExec+ provides a modular protocol system built on top of a common `TransportEngine` and unified `ServiceMetadata` models.
 
 ---
 
-## 1. SMB Driver (`smb`)
-* **Default Port**: `445` (Fallback: `139`)
-* **Implementation Status**: Baseline Operational
-* **Capabilities**:
-  - RFC-compliant SMB2/3 negotiation packet probe
-  - Dialect revision detection (SMB 2.0.2, SMB 2.1, SMB 3.0, SMB 3.0.2, SMB 3.1.1)
-  - SMB Signing requirement audit (defense against relay attacks)
-  - Safe share enumeration (`shares` module)
-  - Account and password policy checks
+## 1. Universal Transport & State Model
+
+Every protocol separates L4 TCP reachability from L7 protocol negotiation and session setup:
+
+* **Transport States**: `TCP_OPEN`, `TCP_REFUSED`, `TCP_RESET`, `TCP_TIMEOUT`, `TCP_UNREACHABLE`
+* **Protocol States**: `PROTOCOL_REACHABLE`, `PROTOCOL_NEGOTIATION_FAILED`, `AUTH_REQUIRED`, `AUTH_FAILED`, `AUTH_SUCCESS`
+* **Result States**: `SUCCESS`, `REACHABLE`, `AUTH_REQUIRED`, `AUTH_FAILED`, `NEGOTIATION_FAILED`, `UNAVAILABLE`, `TIMEOUT`, `ERROR`
 
 ---
 
-## 2. LDAP Driver (`ldap`)
-* **Default Port**: `389` (LDAPS: `636`)
-* **Implementation Status**: Baseline Reachability & Discovery (Advanced queries scheduled)
-* **Capabilities**:
-  - Port connectivity probe
-  - Educational explanation (`crackmapexec+ --explain ldap`)
-  - Integration with user and password policy enumeration modules
+## 2. Supported Protocol Drivers
+
+| Protocol | Default Port | Transport | Key Metadata Extracted | Reference |
+| :--- | :--- | :--- | :--- | :--- |
+| **SMB** | `445` | TCP | Dialect, Signing, Hostname, Domain, Forest, OS Build, System Time | [docs/smb.md](smb.md) |
+| **LDAP** | `389` / `636` | TCP / TLS | RootDSE, Naming Context, Domain, SASL Mechs, TLS Status | [docs/ldap.md](ldap.md) |
+| **WinRM** | `5985` / `5986` | HTTP / HTTPS | HTTP Status, Auth Schemes (Negotiate/NTLM/Basic), WS-Man Version, Server | [docs/winrm.md](winrm.md) |
+| **SSH** | `22` | TCP | SSH Identification Banner, Protocol Version, Software Banner, Inferred OS | [docs/ssh.md](ssh.md) |
 
 ---
 
-## 3. WinRM Driver (`winrm`)
-* **Default Port**: `5985` (HTTPS: `5986`)
-* **Implementation Status**: Baseline Reachability (WS-Man SOAP auth scheduled)
-* **Capabilities**:
-  - Port reachability probe
-  - Educational explanation (`crackmapexec+ --explain winrm`)
+## 3. Connection Diagnostics
 
----
+Run any protocol command with `--verbose` to inspect multi-stage connection diagnostics:
 
-## 4. SSH Driver (`ssh`)
-* **Default Port**: `22`
-* **Implementation Status**: Baseline Banner Grab
-* **Capabilities**:
-  - Real-time SSH protocol version and server banner grab
-  - Host availability checks
-  - Educational explanation (`crackmapexec+ --explain ssh`)
-
----
-
-## 5. Mock Simulation Driver (`mock`)
-* **Default Port**: Virtual
-* **Implementation Status**: Fully Functional Offline Driver
-* **Capabilities**:
-  - Deterministic simulation for tests and seminar demonstrations
-  - Zero network packets
+```bash
+crackmapexec+ smb <target> --verbose
+crackmapexec+ ldap <target> --verbose
+crackmapexec+ winrm <target> --verbose
+crackmapexec+ ssh <target> --verbose
+```

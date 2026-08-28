@@ -1,15 +1,13 @@
-"""Version resolution: Local metadata inspection and remote release verification."""
+"""Version resolution: Single authoritative version source, semver parsing, and release comparison."""
 
 from __future__ import annotations
 
 import importlib.metadata
-import json
 import re
-import urllib.error
-import urllib.request
 from dataclasses import dataclass
 
 from cmeplus import __version__
+from cmeplus.update.releases import fetch_github_releases
 
 
 @dataclass
@@ -22,6 +20,7 @@ class VersionInfo:
     error: str | None = None
     release_url: str | None = None
     release_notes: str | None = None
+    source: str = "GitHub Releases (CodingM-eng/CrackMapExec-Plus)"
 
 
 def get_installed_version() -> str:
@@ -34,15 +33,39 @@ def get_installed_version() -> str:
     return __version__
 
 
-def parse_semver(version_str: str) -> tuple[int, ...]:
-    """Parse version string into a comparable tuple of integers."""
+def parse_semver(version_str: str) -> tuple[int, int, int, int, int]:
+    """Parse version string into a strictly comparable tuple of integers.
+
+    Format: (major, minor, patch, prerelease_flag, prerelease_num)
+    Prerelease flag:
+        -3 for alpha
+        -2 for beta
+        -1 for rc / pre
+         0 for final release
+    """
     clean = version_str.strip().lstrip("vV")
-    # Extract leading numeric segments
-    match = re.match(r"^(\d+)(?:\.(\d+))?(?:\.(\d+))?", clean)
-    if match:
-        parts = [int(p) if p is not None else 0 for p in match.groups()]
-        return tuple(parts)
-    return (0, 0, 0)
+
+    # Match: 0.1.0 or 0.1.0-beta.1 or 0.1.0.dev0
+    match = re.match(r"^(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:[-._]?(alpha|beta|rc|dev|pre)(?:\.?(\d+))?)?", clean, re.IGNORECASE)
+    if not match:
+        return (0, 0, 0, 0, 0)
+
+    major = int(match.group(1)) if match.group(1) is not None else 0
+    minor = int(match.group(2)) if match.group(2) is not None else 0
+    patch = int(match.group(3)) if match.group(3) is not None else 0
+
+    pre_tag = (match.group(4) or "").lower()
+    pre_num = int(match.group(5)) if match.group(5) is not None else 0
+
+    pre_flag = 0
+    if pre_tag in ("alpha", "dev"):
+        pre_flag = -3
+    elif pre_tag == "beta":
+        pre_flag = -2
+    elif pre_tag in ("rc", "pre"):
+        pre_flag = -1
+
+    return (major, minor, patch, pre_flag, pre_num)
 
 
 def compare_versions(installed: str, latest: str | None) -> bool:
@@ -52,70 +75,37 @@ def compare_versions(installed: str, latest: str | None) -> bool:
     return parse_semver(latest) > parse_semver(installed)
 
 
-def get_latest_version(
-    repo: str = "CodingM-eng/CrackMapExec-Plus",
-    timeout: float = 3.0,
-) -> tuple[str | None, str | None, str | None]:
-    """Fetch latest release version tag from GitHub API.
-
-    Returns:
-        (latest_version, release_url, error_message)
-    """
-    installed = get_installed_version()
-    headers = {
-        "User-Agent": f"CrackMapExecPlus/{installed}",
-        "Accept": "application/vnd.github.v3+json",
-    }
-
-    url = f"https://api.github.com/repos/{repo}/releases/latest"
-    req = urllib.request.Request(url, headers=headers)
-
-    try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            if resp.status == 200:
-                data = json.loads(resp.read().decode("utf-8"))
-                tag_name = data.get("tag_name", "").lstrip("vV")
-                html_url = data.get("html_url", "")
-                if tag_name:
-                    return tag_name, html_url, None
-    except urllib.error.HTTPError as exc:
-        if exc.code == 404:
-            # Fallback to tags endpoint if no formal release exists yet
-            try:
-                tags_url = f"https://api.github.com/repos/{repo}/tags"
-                tags_req = urllib.request.Request(tags_url, headers=headers)
-                with urllib.request.urlopen(tags_req, timeout=timeout) as t_resp:
-                    if t_resp.status == 200:
-                        tags_data = json.loads(t_resp.read().decode("utf-8"))
-                        if tags_data and isinstance(tags_data, list):
-                            first_tag = tags_data[0].get("name", "").lstrip("vV")
-                            if first_tag:
-                                return first_tag, f"https://github.com/{repo}/releases/tag/v{first_tag}", None
-            except Exception:
-                pass
-            return None, None, "No published releases found"
-        return None, None, f"HTTP {exc.code} from release server"
-    except (urllib.error.URLError, TimeoutError, OSError):
-        return None, None, "network unavailable"
-    except Exception as exc:
-        return None, None, f"release check error ({exc.__class__.__name__})"
-
-    return None, None, "Unable to determine latest version"
+def is_downgrade(installed: str, requested: str) -> bool:
+    """Return True if requested version is strictly older than installed version."""
+    return parse_semver(requested) < parse_semver(installed)
 
 
 def check_version_status(
     repo: str = "CodingM-eng/CrackMapExec-Plus",
-    timeout: float = 3.0,
+    timeout: float = 4.0,
 ) -> VersionInfo:
-    """Perform complete version status lookup."""
+    """Check installed version against official GitHub releases."""
     installed = get_installed_version()
-    latest, release_url, error = get_latest_version(repo=repo, timeout=timeout)
+    releases, err = fetch_github_releases(repo=repo, timeout=timeout)
 
-    is_update_available = compare_versions(installed, latest)
+    if not releases:
+        return VersionInfo(
+            installed=installed,
+            latest=None,
+            is_update_available=False,
+            error=err or "Unable to check GitHub releases",
+        )
+
+    # Latest official release is first entry
+    latest_rel = releases[0]
+    latest_ver = latest_rel.version
+    is_newer = compare_versions(installed, latest_ver)
+
     return VersionInfo(
         installed=installed,
-        latest=latest,
-        is_update_available=is_update_available,
-        error=error,
-        release_url=release_url,
+        latest=latest_ver,
+        is_update_available=is_newer,
+        error=None,
+        release_url=latest_rel.html_url,
+        release_notes=latest_rel.body or "\n".join(latest_rel.features),
     )
