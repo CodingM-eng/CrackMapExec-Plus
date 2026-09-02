@@ -8,7 +8,7 @@ from pathlib import Path
 from cmeplus.nmap.models import NmapReport
 
 
-class BaseNmapParser(ABC):
+class NmapParser(ABC):
     """Abstract base class for parsing Nmap scan output formats (-oN, -oX, -oG)."""
 
     @abstractmethod
@@ -28,3 +28,22 @@ class BaseNmapParser(ABC):
             raise OSError(f"Failed to read Nmap file '{file_path}': {exc}") from exc
 
         return self.parse_text(content, source_name=str(p.name))
+
+
+# Backward compatibility alias
+BaseNmapParser = NmapParser
+
+
+class XMLParser(NmapParser):
+    """Parser for Nmap XML output format (-oX). Planned for future release."""
+
+    def parse_text(self, text: str, source_name: str = "") -> NmapReport:
+        raise NotImplementedError("Nmap XML output (-oX) parsing is planned for a future release. Please use -oN normal output.")
+
+
+class GrepableParser(NmapParser):
+    """Parser for Nmap Grepable output format (-oG). Planned for future release."""
+
+    def parse_text(self, text: str, source_name: str = "") -> NmapReport:
+        raise NotImplementedError("Nmap Grepable output (-oG) parsing is planned for a future release. Please use -oN normal output.")
+

@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://crackmapexecplus.org/sitemap.xml

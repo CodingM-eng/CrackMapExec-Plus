@@ -5,6 +5,19 @@ from __future__ import annotations
 from enum import Enum
 
 
+class ConnectionStage(str, Enum):
+    """The 8 explicit stages of the Universal Connection Engine state machine."""
+
+    TARGET_RESOLUTION = "TARGET_RESOLUTION"
+    TCP_CONNECT = "TCP_CONNECT"
+    TRANSPORT_READY = "TRANSPORT_READY"
+    PROTOCOL_HANDSHAKE = "PROTOCOL_HANDSHAKE"
+    SESSION_SETUP = "SESSION_SETUP"
+    AUTHENTICATION = "AUTHENTICATION"
+    METADATA = "METADATA"
+    READY = "READY"
+
+
 class TransportState(str, Enum):
     """Represents the raw L4 TCP transport connection status."""
 
@@ -48,3 +61,4 @@ class ProtocolState(str, Enum):
         if self == ProtocolState.AUTH_REQUIRED:
             return "!"
         return "✗"
+

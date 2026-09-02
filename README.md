@@ -215,24 +215,9 @@ crackmapexec+ smb @targets.txt
 crackmapexec+ smb 192.168.1.10 --format json
 ```
 
-### 4. Video Guide Center (`--video` / `--v`)
+### 4. Nmap Intelligence Engine (`--nmap` / `--n`)
 
-```bash
-# Open interactive Video Center menu
-crackmapexec+ --video
-crackmapexec+ --v
-
-# Direct topic guide (e.g. SMB @ 02:23, LDAP @ 06:15)
-crackmapexec+ --video smb
-crackmapexec+ --video ldap
-crackmapexec+ --video winrm
-crackmapexec+ --video ssh
-
-# Search video catalog by keyword
-crackmapexec+ --video search "active directory"
-### 2. Nmap Intelligence Engine (`--nmap` / `--n`)
-
-Bridge port reconnaissance with protocol interrogation in a single workflow:
+Bridge port reconnaissance with protocol interrogation in a single, safe workflow:
 
 ```bash
 # Scan target with Nmap
@@ -266,13 +251,30 @@ Unified Results
 JSON / HTML
 ```
 
-* Run analysis without network actions: `crackmapexec+ analyze nmap.txt`
-* Execute with pre-confirmation: `crackmapexec+ analyze nmap.txt --run`
-* Filter to a single host: `crackmapexec+ --nmap nmap.txt --host 10.10.10.10`
-* Generate report bundle: `crackmapexec+ --nmap nmap.txt --report`
-* Safe offline demo: `crackmapexec+ --nmap examples/demo-nmap.txt --demo`
+* **Analysis-Only Mode**: `crackmapexec+ analyze nmap.txt` (inspects file, shows inventory & plan, zero network actions)
+* **Execute Plan with Confirmation**: `crackmapexec+ analyze nmap.txt --run`
+* **Filter to Specific Host**: `crackmapexec+ --nmap nmap.txt --host 10.10.10.10`
+* **Generate Assessment Reports**: `crackmapexec+ --nmap nmap.txt --report`
+* **Safe Offline Demonstration**: `crackmapexec+ --nmap examples/demo-nmap.txt --demo`
 
-### 3. Multi-Protocol Job Chaining
+### 5. Video Guide Center (`--video` / `--v`)
+
+```bash
+# Open interactive Video Center menu
+crackmapexec+ --video
+crackmapexec+ --v
+
+# Direct topic guide (e.g. SMB @ 02:23, LDAP @ 06:15)
+crackmapexec+ --video smb
+crackmapexec+ --video ldap
+crackmapexec+ --video winrm
+crackmapexec+ --video ssh
+
+# Search video catalog by keyword
+crackmapexec+ --video search "active directory"
+```
+
+### 6. Multi-Protocol Job Chaining
 
 Execute multiple protocol targets in a single pipeline:
 
@@ -280,24 +282,25 @@ Execute multiple protocol targets in a single pipeline:
 crackmapexec+ smb 10.10.10.10 ldap 10.10.10.10 winrm 10.10.10.20 ssh 10.10.10.30
 ```
 
-### 4. Interactive Guided Wizard
+### 7. Interactive Guided Wizard
 
 ```bash
 crackmapexec+ wizard
 ```
 
-### 5. Safe Seminar Demo Simulation
+### 8. Safe Seminar Demo Simulation
 
 ```bash
 crackmapexec+ --demo
 ```
 
-### 6. HTML & JSON Reporting
+### 9. HTML & JSON Reporting
 
 ```bash
 crackmapexec+ smb 192.168.1.0/24 --report
 ```
-Generates reports in `reports/scan-YYYY-MM-DD-HH-MM-SS/` containing `report.json` and `report.html`.
+Generates assessment reports in `reports/scan-YYYY-MM-DD-HH-MM-SS/` containing `report.json` and `report.html`.
+
 
 ---
 

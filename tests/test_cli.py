@@ -38,10 +38,11 @@ def test_cli_doctor(capsys):
     captured = capsys.readouterr()
     assert "CrackMapExec+ Doctor" in captured.out
     assert "Python" in captured.out
-    assert "Package" in captured.out
-    assert "Config directory" in captured.out
+    assert "Installation" in captured.out
+    assert "Config" in captured.out
     assert "Video catalog" in captured.out
     assert "Installation status:" in captured.out
+
 
 
 def test_cli_doctor_help(capsys):

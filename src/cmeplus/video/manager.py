@@ -108,6 +108,37 @@ class VideoGuideEngine:
                 results.append(item)
         return results
 
+    def get_recommendations_for_protocols(
+        self, discovered_services: list[str]
+    ) -> tuple[list[VideoGuideItem], list[str]]:
+        """Dynamically generate recommended video guides and upcoming topics based on discovered services."""
+        from cmeplus.protocols.registry import ProtocolRegistry
+
+        recommended: list[VideoGuideItem] = []
+        coming_soon: list[str] = []
+
+        seen_keys = set()
+        for svc in discovered_services:
+            clean_svc = svc.lower().strip()
+            item = self.get(clean_svc)
+            proto_info = ProtocolRegistry.get(clean_svc)
+
+            if item and item.key not in seen_keys:
+                seen_keys.add(item.key)
+                if not item.is_coming_soon:
+                    recommended.append(item)
+                else:
+                    coming_soon.append(item.title)
+            elif proto_info and proto_info.name not in seen_keys:
+                seen_keys.add(proto_info.name)
+                coming_soon.append(proto_info.display_name)
+            elif clean_svc not in seen_keys:
+                seen_keys.add(clean_svc)
+                coming_soon.append(svc.upper())
+
+        return recommended, coming_soon
+
+
     @staticmethod
     def open_browser(url: str) -> bool:
         """Open the timestamped URL in default system browser safely."""
@@ -117,3 +148,4 @@ class VideoGuideEngine:
             return webbrowser.open(url)
         except Exception:
             return False
+

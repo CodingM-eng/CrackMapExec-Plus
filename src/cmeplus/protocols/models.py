@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from cmeplus.core.results import Result, ResultState
-from cmeplus.transport.states import ProtocolState, TransportState
+from cmeplus.transport.states import ConnectionStage, ProtocolState, TransportState
 
 
 @dataclass
@@ -18,6 +18,7 @@ class ServiceMetadata:
     protocol: str = ""
     transport_state: TransportState = TransportState.TCP_OPEN
     protocol_state: ProtocolState = ProtocolState.PROTOCOL_REACHABLE
+    stage: ConnectionStage = ConnectionStage.READY
     hostname: str = ""
     domain: str = ""
     workgroup: str = ""
@@ -39,6 +40,7 @@ class ServiceMetadata:
             "protocol": self.protocol,
             "transport_state": self.transport_state.value,
             "protocol_state": self.protocol_state.value,
+            "stage": self.stage.value if isinstance(self.stage, ConnectionStage) else str(self.stage),
             "hostname": self.hostname,
             "domain": self.domain,
             "workgroup": self.workgroup,
@@ -53,6 +55,7 @@ class ServiceMetadata:
             "capabilities": self.capabilities,
             "diagnostics": self.diagnostics,
         }
+
 
 
 @dataclass
@@ -193,7 +196,9 @@ class ConnectionResult:
     protocol: str
     transport: str = "tcp"
     tcp_state: TransportState = TransportState.TCP_OPEN
+    transport_state: TransportState = TransportState.TCP_OPEN
     protocol_state: ProtocolState = ProtocolState.PROTOCOL_REACHABLE
+    stage: ConnectionStage = ConnectionStage.READY
     session_state: str = ""
     authentication_state: str = ""
     duration: float = 0.0
@@ -201,9 +206,15 @@ class ConnectionResult:
     error_message: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
+    def __post_init__(self) -> None:
+        if self.transport_state != TransportState.TCP_OPEN and self.tcp_state == TransportState.TCP_OPEN:
+            self.tcp_state = self.transport_state
+        elif self.tcp_state != TransportState.TCP_OPEN and self.transport_state == TransportState.TCP_OPEN:
+            self.transport_state = self.tcp_state
+
     @property
     def is_reachable(self) -> bool:
-        return self.tcp_state == TransportState.TCP_OPEN and self.protocol_state in (
+        return (self.tcp_state == TransportState.TCP_OPEN or self.transport_state == TransportState.TCP_OPEN) and self.protocol_state in (
             ProtocolState.PROTOCOL_REACHABLE,
             ProtocolState.AUTH_REQUIRED,
             ProtocolState.AUTH_SUCCESS,
@@ -264,7 +275,9 @@ class ConnectionResult:
                 "protocol": self.protocol,
                 "transport": self.transport,
                 "tcp_state": self.tcp_state.value,
+                "transport_state": self.transport_state.value,
                 "protocol_state": self.protocol_state.value,
+                "stage": self.stage.value if isinstance(self.stage, ConnectionStage) else str(self.stage),
                 "session_state": self.session_state,
                 "authentication_state": self.authentication_state,
                 "duration": round(self.duration, 4),
@@ -272,6 +285,7 @@ class ConnectionResult:
                 "error_message": self.error_message,
             }
         )
+
         if self.hostname:
             d["hostname"] = self.hostname
         if self.os_name:

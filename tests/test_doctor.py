@@ -8,14 +8,19 @@ def test_doctor_engine_run_diagnostics():
     doctor = DoctorEngine()
     checks = doctor.run_diagnostics()
 
-    assert len(checks) >= 6
+    assert len(checks) == 10
     names = [c.name for c in checks]
     assert "Python" in names
-    assert "Package" in names
-    assert "crackmapexec+ PATH" in names
-    assert "cme+ PATH" in names
-    assert "Config directory" in names
+    assert "Installation" in names
+    assert "PATH" in names
+    assert "Dependencies" in names
+    assert "Protocol registry" in names
+    assert "Module registry" in names
+    assert "Nmap parser" in names
     assert "Video catalog" in names
+    assert "Config" in names
+    assert "Git" in names
+
 
 
 def test_doctor_engine_render_healthy(capsys):
