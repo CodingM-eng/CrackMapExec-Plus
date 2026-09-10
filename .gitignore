@@ -69,18 +69,4 @@ desktop.ini
 *.sqlite3
 *.log
 
-# Node & Next.js Website Build
-website/node_modules/
-website/.next/
-website/out/
-website/.turbo/
-node_modules/
-.next/
-out/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-.pnpm-store/
-.pnpm-debug.log*
 
