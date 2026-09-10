@@ -203,6 +203,7 @@ class DoctorEngine:
         # 7. Nmap Parser Check
         try:
             from cmeplus.nmap.parsers.normal import NormalParser
+            from cmeplus.nmap.parsers.xml import XMLParser
 
             n_parser = NormalParser()
             test_nmap_sample = (
@@ -213,12 +214,27 @@ class DoctorEngine:
                 "445/tcp open  microsoft-ds Windows 10\n"
             )
             test_rep = n_parser.parse_text(test_nmap_sample, source_name="doctor-test")
-            if test_rep.total_hosts == 1 and test_rep.total_open_services == 1:
+
+            xml_parser = XMLParser()
+            test_xml_sample = (
+                '<nmaprun scanner="nmap">'
+                '<host><status state="up"/><address addr="10.0.0.1" addrtype="ipv4"/>'
+                '<ports><port protocol="tcp" portid="445"><state state="open"/>'
+                '<service name="microsoft-ds"/></port></ports></host></nmaprun>'
+            )
+            xml_rep = xml_parser.parse_text(test_xml_sample, source_name="doctor-test")
+
+            if (
+                test_rep.total_hosts == 1
+                and test_rep.total_open_services == 1
+                and xml_rep.total_hosts == 1
+                and xml_rep.total_open_services == 1
+            ):
                 checks.append(
                     DiagnosticCheck(
                         name="Nmap parser",
                         passed=True,
-                        details="NormalParser (-oN) operational & verified",
+                        details="Normal (-oN) & XML (-oX) parsers verified",
                     )
                 )
             else:
@@ -227,7 +243,7 @@ class DoctorEngine:
                         name="Nmap parser",
                         passed=False,
                         details="Test parse returned unexpected report structure",
-                        suggested_fix="Check NormalParser regex in src/cmeplus/nmap/parsers/normal.py",
+                        suggested_fix="Check NormalParser and XMLParser in src/cmeplus/nmap/parsers/",
                     )
                 )
         except Exception as exc:

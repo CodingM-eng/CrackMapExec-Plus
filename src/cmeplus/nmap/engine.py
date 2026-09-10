@@ -13,6 +13,7 @@ from rich.text import Text
 from cmeplus.core.engine import Engine
 from cmeplus.nmap.models import ExecutionPlan, NmapReport
 from cmeplus.nmap.parsers.normal import NormalParser
+from cmeplus.nmap.parsers.xml import XMLParser
 from cmeplus.nmap.resolver import ProtocolResolver
 from cmeplus.output.console import OutputConsole
 
@@ -22,12 +23,35 @@ class NmapEngine:
 
     def __init__(self, console: OutputConsole | None = None) -> None:
         self.console = console or OutputConsole()
-        self.parser = NormalParser()
+        self.normal_parser = NormalParser()
+        self.xml_parser = XMLParser()
+        self.parser = self.normal_parser
         self.resolver = ProtocolResolver()
 
-    def parse_file(self, file_path: str | Path) -> NmapReport:
-        """Parse Nmap scan file into an NmapReport model."""
-        return self.parser.parse_file(file_path)
+    def parse_file(self, file_path: str | Path, format: str | None = None) -> NmapReport:
+        """Parse Nmap scan file into an NmapReport model, auto-detecting XML vs normal text."""
+        p = Path(file_path)
+        if not p.is_file():
+            raise FileNotFoundError(f"Nmap file not found: {file_path}")
+
+        if format == "xml":
+            return self.xml_parser.parse_file(p)
+        elif format == "normal":
+            return self.normal_parser.parse_file(p)
+
+        # Auto-detection based on content signature
+        content = p.read_text(encoding="utf-8", errors="replace")
+        clean = content.lstrip()
+        if clean.startswith("<?xml") or "<nmaprun" in clean[:500]:
+            return self.xml_parser.parse_text(content, source_name=str(p.name))
+        return self.normal_parser.parse_text(content, source_name=str(p.name))
+
+    def parse_text(self, text: str, source_name: str = "", format: str | None = None) -> NmapReport:
+        """Parse Nmap scan report text, auto-detecting XML vs normal text."""
+        clean = text.lstrip()
+        if format == "xml" or (format is None and (clean.startswith("<?xml") or "<nmaprun" in clean[:500])):
+            return self.xml_parser.parse_text(text, source_name=source_name)
+        return self.normal_parser.parse_text(text, source_name=source_name)
 
     def render_service_inventory(
         self,

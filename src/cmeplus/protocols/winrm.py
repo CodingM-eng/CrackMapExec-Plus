@@ -164,16 +164,15 @@ class WinRMProtocol(BaseProtocol):
                 data=self.session_data,
             )
 
-        self.is_authenticated = True
-        self.metadata.auth_state = f"{domain}\\{user} Authenticated"
-        self.session_data["auth_state"] = f"{domain}\\{user} Authenticated"
+        self.metadata.auth_state = f"{domain}\\{user} Inspected"
+        self.session_data["auth_state"] = f"{domain}\\{user} Inspected"
         return Result(
             target=self.target.endpoint,
             port=self.port,
             protocol=self.name,
             status=ResultState.SUCCESS,
             duration=dur,
-            message=f"{domain}\\{user}:[green][+] WINRM AUTH SUCCESS[/green] (Admin Access)",
+            message=f"{domain}\\{user}: WinRM HTTP-API endpoint verified",
             data=self.session_data,
         )
 

@@ -124,3 +124,22 @@ def test_missing_target_file():
     assert len(target_set) == 0
     assert len(target_set.issues) == 1
     assert "Target file not found" in target_set.issues[0].reason
+
+
+def test_target_argument_injection_rejected():
+    target_set = TargetEngine.parse("--script=smb-vuln*")
+    assert len(target_set) == 0
+    assert len(target_set.issues) == 1
+    assert "cannot start with a hyphen" in target_set.issues[0].reason
+
+    target_set_flag = TargetEngine.parse("-u")
+    assert len(target_set_flag) == 0
+    assert len(target_set_flag.issues) == 1
+    assert "cannot start with a hyphen" in target_set_flag.issues[0].reason
+
+
+def test_target_control_characters_rejected():
+    target_set = TargetEngine.parse("192.168.1.1\x00extra")
+    assert len(target_set) == 0
+    assert len(target_set.issues) == 1
+    assert "illegal control or null characters" in target_set.issues[0].reason

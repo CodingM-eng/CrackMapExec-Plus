@@ -138,7 +138,12 @@ def parse_and_execute(argv: list[str] | None = None) -> int:
         print_categorized_help(console_out.console)
         return 0
 
-    # 3. Check for --nmap or --n (Nmap Intelligence Engine)
+    # 3. Check for nmap / --nmap / --n (Nmap Intelligence Engine)
+    if first_arg == "nmap":
+        is_demo = "--demo" in argv
+        clean_nmap_args = [a for a in argv[1:] if a != "--demo"]
+        return handle_nmap(clean_nmap_args, console_out, is_demo=is_demo)
+
     if "--nmap" in argv or "--n" in argv:
         flag = "--nmap" if "--nmap" in argv else "--n"
         idx = argv.index(flag)

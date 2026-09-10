@@ -223,14 +223,15 @@ def handle_command_help(command: str, console: OutputConsole) -> None:
     elif cmd in ("nmap", "analyze"):
         content.append("CrackMapExec+ Nmap Intelligence Engine\n\n", style="bold white")
         content.append("Usage:\n", style="bold cyan")
-        content.append("  crackmapexec+ --nmap <nmap.txt>      Analyze Nmap -oN output and build execution plan\n", style="bold yellow")
-        content.append("  crackmapexec+ --n <nmap.txt>         Short alias for --nmap\n", style="bold yellow")
-        content.append("  crackmapexec+ analyze <nmap.txt>     Analyze file and preview plan (no network actions)\n", style="bold yellow")
-        content.append("  crackmapexec+ analyze <nmap.txt> --run Execute planned probes after confirmation\n", style="bold yellow")
-        content.append("  crackmapexec+ --nmap <nmap.txt> --host <ip> Target a specific host from multi-host report\n", style="bold yellow")
-        content.append("  crackmapexec+ --nmap <nmap.txt> --report Generate assessment report bundle (JSON/HTML)\n\n", style="bold yellow")
+        content.append("  crackmapexec+ nmap <report.xml|txt>  Analyze Nmap XML (-oX) or Normal (-oN) report\n", style="bold yellow")
+        content.append("  crackmapexec+ --nmap <file>          Flag syntax alias for nmap file analysis\n", style="bold yellow")
+        content.append("  crackmapexec+ --n <file>             Short alias for --nmap\n", style="bold yellow")
+        content.append("  crackmapexec+ analyze <file>         Analyze file and preview plan (no network actions)\n", style="bold yellow")
+        content.append("  crackmapexec+ analyze <file> --run   Execute planned probes after confirmation\n", style="bold yellow")
+        content.append("  crackmapexec+ nmap <file> --host <ip> Target a specific host from multi-host report\n", style="bold yellow")
+        content.append("  crackmapexec+ nmap <file> --report   Generate assessment report bundle (JSON/HTML)\n\n", style="bold yellow")
         content.append("Description:\n", style="bold cyan")
-        content.append("  Parses standard Nmap human-readable output (-oN), extracts discovered services and banners,\n", style="white")
+        content.append("  Ingests standard Nmap XML (-oX) and Normal (-oN) reports, extracts discovered services,\n", style="white")
         content.append("  resolves supported protocol workflows (SMB, LDAP, WinRM, SSH), and coordinates plan execution.\n\n", style="white")
 
     else:

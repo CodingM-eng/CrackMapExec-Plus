@@ -174,29 +174,27 @@ class LDAPProtocol(BaseProtocol):
         dur = time.perf_counter() - start_t
 
         if not self.credentials.has_auth:
-            self.is_authenticated = True
-            self.metadata.auth_state = "Anonymous Bind Allowed"
-            self.session_data["auth_state"] = "Anonymous Bind Allowed"
+            self.metadata.auth_state = "Anonymous RootDSE Probe"
+            self.session_data["auth_state"] = "Anonymous RootDSE Probe"
             return Result(
                 target=self.target.endpoint,
                 port=self.port,
                 protocol=self.name,
                 status=ResultState.SUCCESS,
                 duration=dur,
-                message=f"{domain}\\{user} - Anonymous LDAP bind successful",
+                message=f"{domain}\\{user} - Anonymous RootDSE query succeeded",
                 data=self.session_data,
             )
 
-        self.is_authenticated = True
-        self.metadata.auth_state = f"{domain}\\{user} Authenticated"
-        self.session_data["auth_state"] = f"{domain}\\{user} Authenticated"
+        self.metadata.auth_state = f"{domain}\\{user} Inspected"
+        self.session_data["auth_state"] = f"{domain}\\{user} Inspected"
         return Result(
             target=self.target.endpoint,
             port=self.port,
             protocol=self.name,
             status=ResultState.SUCCESS,
             duration=dur,
-            message=f"{domain}\\{user}:[green][+] LDAP BIND SUCCESS[/green]",
+            message=f"{domain}\\{user}: LDAP endpoint & RootDSE naming contexts verified",
             data=self.session_data,
         )
 

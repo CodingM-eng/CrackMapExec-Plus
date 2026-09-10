@@ -159,16 +159,15 @@ class SSHProtocol(BaseProtocol):
                 data=self.session_data,
             )
 
-        self.is_authenticated = True
-        self.metadata.auth_state = f"{user} Authenticated"
-        self.session_data["auth_state"] = f"{user} Authenticated"
+        self.metadata.auth_state = f"{user} Inspected"
+        self.session_data["auth_state"] = f"{user} Inspected"
         return Result(
             target=self.target.endpoint,
             port=self.port,
             protocol=self.name,
             status=ResultState.SUCCESS,
             duration=dur,
-            message=f"{user}:[green][+] SSH AUTH SUCCESS[/green]",
+            message=f"{user}: SSH transport banner & protocol verified",
             data=self.session_data,
         )
 

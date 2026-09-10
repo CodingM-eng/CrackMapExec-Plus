@@ -308,3 +308,36 @@ def test_cli_nmap_help(capsys):
     captured = capsys.readouterr()
     assert "CrackMapExec+ Nmap Intelligence Engine" in captured.out
 
+
+def test_cli_nmap_subcommand_help(capsys):
+    ret = parse_and_execute(["nmap", "--help"])
+    assert ret == 0
+    captured = capsys.readouterr()
+    assert "CrackMapExec+ Nmap Intelligence Engine" in captured.out
+
+
+def test_cli_nmap_subcommand_demo(capsys):
+    ret = parse_and_execute(["nmap", "examples/demo-nmap.txt", "--demo"])
+    assert ret == 0
+    captured = capsys.readouterr()
+    assert "Target Intelligence" in captured.out
+    assert "CrackMapExec+ Nmap Intelligence" in captured.out
+
+
+def test_cli_nmap_subcommand_xml_demo(tmp_path, capsys):
+    xml_path = tmp_path / "scan.xml"
+    xml_path.write_text(
+        '<?xml version="1.0"?>'
+        '<nmaprun scanner="nmap">'
+        '<host><status state="up"/><address addr="10.10.10.25" addrtype="ipv4"/>'
+        '<ports><port protocol="tcp" portid="445"><state state="open"/>'
+        '<service name="microsoft-ds" product="Windows Server 2022"/></port></ports>'
+        '</host></nmaprun>',
+        encoding="utf-8",
+    )
+    ret = parse_and_execute(["nmap", str(xml_path), "--demo"])
+    assert ret == 0
+    captured = capsys.readouterr()
+    assert "Target Intelligence" in captured.out
+    assert "10.10.10.25" in captured.out
+

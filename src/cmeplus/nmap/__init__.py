@@ -8,8 +8,9 @@ from cmeplus.nmap.models import (
     NmapService,
     ServiceMapping,
 )
-from cmeplus.nmap.parsers import BaseNmapParser, NormalParser
+from cmeplus.nmap.parsers import BaseNmapParser, NormalParser, XMLParser
 from cmeplus.nmap.resolver import ProtocolResolver
+from cmeplus.nmap.scanner import NmapScanner
 
 __all__ = [
     "BaseNmapParser",
@@ -17,8 +18,10 @@ __all__ = [
     "NmapEngine",
     "NmapHost",
     "NmapReport",
+    "NmapScanner",
     "NmapService",
     "NormalParser",
     "ProtocolResolver",
     "ServiceMapping",
+    "XMLParser",
 ]

@@ -34,11 +34,6 @@ class NmapParser(ABC):
 BaseNmapParser = NmapParser
 
 
-class XMLParser(NmapParser):
-    """Parser for Nmap XML output format (-oX). Planned for future release."""
-
-    def parse_text(self, text: str, source_name: str = "") -> NmapReport:
-        raise NotImplementedError("Nmap XML output (-oX) parsing is planned for a future release. Please use -oN normal output.")
 
 
 class GrepableParser(NmapParser):

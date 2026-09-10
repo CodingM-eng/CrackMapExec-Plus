@@ -182,6 +182,30 @@ class TargetEngine:
         line_number: int | None = None,
     ) -> None:
         """Parse an individual target token (IP, CIDR, Range, Hostname)."""
+        # Security: Reject leading hyphens (argument/flag injection defense)
+        if token.startswith("-"):
+            target_set.add_issue(
+                TargetValidationIssue(
+                    raw=token,
+                    reason="Invalid target: Target cannot start with a hyphen '-' (argument injection protection)",
+                    source=source,
+                    line_number=line_number,
+                )
+            )
+            return
+
+        # Security: Reject control characters or null bytes
+        if any(ord(c) < 32 or ord(c) == 127 for c in token):
+            target_set.add_issue(
+                TargetValidationIssue(
+                    raw=token,
+                    reason="Invalid target: Target contains illegal control or null characters",
+                    source=source,
+                    line_number=line_number,
+                )
+            )
+            return
+
         host_part, port = cls._extract_host_and_port(token, default_port)
 
         # 1. Check for CIDR (e.g. 192.168.1.0/24 or 2001:db8::/64)
