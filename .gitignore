@@ -69,4 +69,13 @@ desktop.ini
 *.sqlite3
 *.log
 
+# Generated Local Launchers (from install.sh / install.ps1)
+/crackmapexec+
+/cme+
+/crackmapexec-plus
+/cme-plus
+/crackmapexecplus
+/cmeplus
+/*.cmd
+
 

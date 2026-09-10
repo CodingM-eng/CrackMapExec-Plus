@@ -1,21 +1,34 @@
 # CrackMapExec+ Nmap Intelligence Engine
 
-The **Nmap Intelligence Engine** bridges the gap between network port scanning and protocol-level security assessment. It ingests standard human-readable Nmap scan reports (`-oN`), discovers listening services, resolves supported protocols, and constructs structured execution plans with mandatory interactive confirmation.
+The **Nmap Intelligence Engine** bridges the gap between network port scanning and protocol-level security assessment. It ingests standard human-readable Nmap scan reports (`-oN`), structured XML output (`-oX`), and grepable output (`-oG`), automatically detecting the format, discovering listening services, resolving supported protocols, and constructing structured execution plans with mandatory interactive confirmation.
 
 ---
 
 ## 1. Quick Start
 
 ### Step 1: Generate an Nmap Scan Report
+
+Supports any of the primary Nmap output formats:
+
 ```bash
+# Normal text format (-oN)
 nmap -sC -sV -p- -Pn -oN nmap.txt 10.10.10.10
+
+# XML format (-oX)
+nmap -sC -sV -p- -Pn -oX nmap.xml 10.10.10.10
+
+# Grepable format (-oG)
+nmap -sC -sV -p- -Pn -oG nmap.gnmap 10.10.10.10
 ```
 
 ### Step 2: Ingest and Analyze with CrackMapExec+
+
 ```bash
 crackmapexec+ --nmap nmap.txt
+# or with XML:
+crackmapexec+ --nmap nmap.xml
 # or short alias:
-crackmapexec+ --n nmap.txt
+crackmapexec+ --n nmap.gnmap
 ```
 
 ---

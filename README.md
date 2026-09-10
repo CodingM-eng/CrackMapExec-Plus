@@ -38,14 +38,29 @@ CrackMapExec+ is inspired by the protocol-oriented ergonomics of CrackMapExec an
 
 ## 📦 Installation Options
 
-### Option 1: One-Command Automated Installer (Recommended for Cloned Repo)
+### Option 1: One-Command Automated Installer (Zero-Error Clean Install)
 
-Clone the repository and run the idempotent installer (automatically configures `pipx` and system PATH):
+Clone the repository and run the automated installer. It isolates the environment, configures standalone launchers in `~/.local/bin` (and `/usr/local/bin` if root, or `%USERPROFILE%\.local\bin` on Windows), and produces local launchers (`./crackmapexec+` and `./cme+`), allowing immediate execution without activating `.venv`:
 
+**Linux & macOS:**
 ```bash
 git clone https://github.com/CodingM-eng/CrackMapExec-Plus.git
 cd CrackMapExec-Plus
 ./install.sh
+```
+
+**Windows:**
+```powershell
+git clone https://github.com/CodingM-eng/CrackMapExec-Plus.git
+cd CrackMapExec-Plus
+powershell -ExecutionPolicy Bypass -File .\install.ps1
+```
+
+Once installed, run directly from any directory:
+```bash
+crackmapexec+ --version
+crackmapexec+ doctor
+cme+ --demo
 ```
 
 ### Option 2: Direct Global Install via pipx (No Git Clone Required)
@@ -217,16 +232,18 @@ crackmapexec+ smb 192.168.1.10 --format json
 
 ### 4. Nmap Intelligence Engine (`--nmap` / `--n`)
 
-Bridge port reconnaissance with protocol interrogation in a single, safe workflow:
+Bridge port reconnaissance with protocol interrogation in a single, safe workflow. Supports Normal text (`-oN`), XML (`-oX`), and Grepable (`-oG`) outputs with automatic format detection:
 
 ```bash
-# Scan target with Nmap
+# Scan target with Nmap (-oN, -oX, or -oG)
 nmap -sC -sV -p- -Pn -oN nmap.txt 10.10.10.10
+nmap -sC -sV -p- -Pn -oX nmap.xml 10.10.10.10
+nmap -sC -sV -p- -Pn -oG nmap.gnmap 10.10.10.10
 
-# Analyze and inspect with CrackMapExec+
+# Analyze and inspect with CrackMapExec+ (auto-detects format)
 crackmapexec+ --nmap nmap.txt
-# or short alias:
-crackmapexec+ --n nmap.txt
+crackmapexec+ --nmap nmap.xml
+crackmapexec+ --n nmap.gnmap
 ```
 
 ```text

@@ -8,13 +8,14 @@ from cmeplus.nmap.models import (
     NmapService,
     ServiceMapping,
 )
-from cmeplus.nmap.parsers import BaseNmapParser, NormalParser, XMLParser
+from cmeplus.nmap.parsers import BaseNmapParser, GrepableParser, NormalParser, XMLParser
 from cmeplus.nmap.resolver import ProtocolResolver
 from cmeplus.nmap.scanner import NmapScanner
 
 __all__ = [
     "BaseNmapParser",
     "ExecutionPlan",
+    "GrepableParser",
     "NmapEngine",
     "NmapHost",
     "NmapReport",

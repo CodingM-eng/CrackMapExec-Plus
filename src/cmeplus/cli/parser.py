@@ -273,26 +273,50 @@ def parse_and_execute(argv: list[str] | None = None) -> int:
     if "--workers" in clean_argv:
         w_idx = clean_argv.index("--workers")
         if w_idx + 1 < len(clean_argv):
+            val = clean_argv[w_idx + 1]
             try:
-                workers = int(clean_argv[w_idx + 1])
+                workers = int(val)
+                if workers <= 0:
+                    console_out.print_failure(f"Invalid value for --workers: '{val}' must be a positive integer.")
+                    return 1
                 del clean_argv[w_idx : w_idx + 2]
             except ValueError:
-                pass
+                console_out.print_failure(f"Invalid value for --workers: '{val}' must be a positive integer.")
+                return 1
+        else:
+            console_out.print_failure("Missing argument for --workers <N>.")
+            return 1
 
     if "--timeout" in clean_argv:
         t_idx = clean_argv.index("--timeout")
         if t_idx + 1 < len(clean_argv):
+            val = clean_argv[t_idx + 1]
             try:
-                timeout = float(clean_argv[t_idx + 1])
+                timeout = float(val)
+                if timeout <= 0:
+                    console_out.print_failure(f"Invalid value for --timeout: '{val}' must be a positive number.")
+                    return 1
                 del clean_argv[t_idx : t_idx + 2]
             except ValueError:
-                pass
+                console_out.print_failure(f"Invalid value for --timeout: '{val}' must be a positive number.")
+                return 1
+        else:
+            console_out.print_failure("Missing argument for --timeout <sec>.")
+            return 1
 
     if "--format" in clean_argv:
         f_idx = clean_argv.index("--format")
         if f_idx + 1 < len(clean_argv):
-            output_format = clean_argv[f_idx + 1]
+            output_format = clean_argv[f_idx + 1].lower()
+            if output_format not in ("console", "json", "quiet"):
+                console_out.print_failure(
+                    f"Invalid output format: '{clean_argv[f_idx + 1]}'. Choose from: console, json, quiet."
+                )
+                return 1
             del clean_argv[f_idx : f_idx + 2]
+        else:
+            console_out.print_failure("Missing argument for --format <format> (console, json, quiet).")
+            return 1
 
     console_out.verbose = verbose
     if output_format in ("json", "quiet"):
@@ -356,9 +380,17 @@ def parse_and_execute(argv: list[str] | None = None) -> int:
             return 1
 
         target_set = TargetEngine.parse(parsed_sub.target, default_port=parsed_sub.port)
-        if not target_set and not target_set.issues:
-            console_out.print_failure(f"No valid targets found in '{parsed_sub.target}'")
+        if not target_set:
+            if target_set.issues:
+                for issue in target_set.issues:
+                    console_out.print_failure(f"Target error: {issue.reason} (input: '{issue.raw}')")
+            else:
+                console_out.print_failure(f"No valid targets found in '{parsed_sub.target}'")
             return 1
+
+        if target_set.issues and verbose:
+            for issue in target_set.issues:
+                console_out.print_warning(f"Target warning: {issue.reason} (input: '{issue.raw}')")
 
         creds = JobCredentials(
             username=parsed_sub.username,
@@ -406,3 +438,7 @@ def main() -> None:
     except CMEPlusError as exc:
         print(f"[!] Error: {exc}", file=sys.stderr)
         sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

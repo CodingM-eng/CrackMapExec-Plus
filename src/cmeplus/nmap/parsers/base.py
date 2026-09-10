@@ -36,9 +36,4 @@ BaseNmapParser = NmapParser
 
 
 
-class GrepableParser(NmapParser):
-    """Parser for Nmap Grepable output format (-oG). Planned for future release."""
-
-    def parse_text(self, text: str, source_name: str = "") -> NmapReport:
-        raise NotImplementedError("Nmap Grepable output (-oG) parsing is planned for a future release. Please use -oN normal output.")
 
